@@ -74,6 +74,15 @@ alert) or that it didn't when it did (duplicate next run). Choose the failure
 you can live with — here, a rare duplicate beats a silent miss, so
 fingerprints commit last.
 
+**Every write must be idempotent.** A run can die after some writes and be
+retried, so design each append to be safely repeatable: key appends by
+stable identity (`alert_id` fingerprint, `event_id`, run-stamped NAV rows)
+and dedupe on that key before writing, so a retry converges to the same
+state instead of doubling rows. The same applies to any tool call with side
+effects mid-run — if you can't make it idempotent, make it last, so a retry
+replays nothing before it. "Retried the run" must never be a user-visible
+event.
+
 ## 3. The LLM's cage (alpi usage)
 
 alpi does exactly one job here: turn fetched evidence into classified,
