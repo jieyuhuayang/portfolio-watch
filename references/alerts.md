@@ -92,27 +92,42 @@ for each candidate:
 one of a four-link delivery chain, and every link can independently be the
 reason a user "never got the alert":
 
-1. **Declared** — the output group is declared alertable in the release; rows
-   in an undeclared group are just data.
-2. **Enabled** — the Automation delivers declared alert outputs on successful
-   runs only when its notification capability is on (new automations default
-   to on; verify, don't assume).
-3. **Bound** — the receiving user has an active alert binding for this
-   automation. Publishing creates the owner's binding automatically, but
-   *following/subscribing to a Playbook does not create one* — a follower who
-   wants alerts needs an explicit alert subscription.
-4. **Routed** — the user's notification preferences point at a live
-   destination (their connected messaging channel or verified email).
+1. **Declared** — the output is wrapped in `alertOutput()` with a root `body`
+   string; rows in an undeclared output are just data.
+2. **Enabled** — the producer cronjob carries `--push-notify` (default on for
+   new automations; verify with `alva deploy get`, fix with
+   `alva deploy update --id N --push-notify`).
+3. **Bound** — the receiving user holds an ACTIVE alert binding for this
+   automation. `alva automation publish` creates the owner's binding
+   automatically (even with `--skip-auto-trigger`), but *following a Playbook
+   never changes alerts* — any other viewer needs an explicit
+   `alva alert enable --automation <owner>/<name>` (or `--automation-ids`,
+   with `--channel-id` for a topic channel).
+4. **Routed** — the delivery resource points at a live destination: check
+   with `alva automation delivery get --id N`; update only the field that
+   must change (`--email-enabled` / `--alva-channel-ids`), never
+   read-modify-write the whole resource. `channel_id=0` is the default
+   personal destination; external DM follows the account's active IM
+   provider.
 
 When debugging "no alert arrived", walk the chain in this order; when
 verifying done-ness, prove each link separately before the single test
-delivery.
+delivery. **Delivery proof is an `alva alert history` row with status
+`sent`** — a written ALFS record is not delivery, and neither is a
+successful binding/config mutation.
 
 - Multiple survivors in one run → **one digest notification**, ordered by
   severity, not N pings. The unit of interruption is the run, not the rule.
+  This is also the platform's contract, not just taste: a run may return **at
+  most one alert record per declared source** (root `body` required, `title`
+  optional), so the digest is the only shape that fits. Survivors are
+  individually preserved in the `alerts/log` audit output
+  (`feed-contract.md`).
 - Every alert text answers: **what** changed, **how much/severe**, **since
   when**, on **what evidence** (with timestamp/source), and **where to look**
-  (link to the Playbook section). No alert says only "something happened".
+  — attach the Playbook link as a declared action (`openUrlAction`; a bare
+  `url` field does not become a button). No alert says only "something
+  happened".
 - Absolute balance values stay out of notification text (push notifications
   land on lock screens); percentages carry the signal.
 - Stale or carried-price assets are excluded from rule evaluation entirely —

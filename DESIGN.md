@@ -105,6 +105,25 @@ Playbook**。
 - **无顶层 await**（文档 + agent 行为旁证）：线上 agent 自己写的
   `alva run --code` 脚本即为 `(async()=>{...})();` 形态。
 
+阶段 2 真机校准（对照 CLI `--help` 全树 + 官方 skill references）追加的裁决，
+全表见 `calibration.md`：
+
+- **digest 是平台契约不只是产品判断**：declared alert output 每次运行每个
+  source 最多返回 1 条记录（root `body` 必填）→ v1 的 `alerts` 组拆成
+  审计日志输出 + `alertOutput` digest 输出两件事。
+- **免费档不能发布私有 Playbook**（private/paid 是付费权益，网关直接
+  PERMISSION_DENIED）→ "private by default" 改写为档位感知的诚实阶梯：
+  draft → share-safe 公开 → 付费档 private。宁可停在 draft，不为发布把
+  真实余额转公开。
+- **官方 fail-fast vs 本 Skill 的降级阶梯**存在真实张力：官方要求不许
+  catch-and-continue 造假数据；本 Skill 保留"逐资产 carried price"作为
+  **显式声明的业务状态**（写 `pricing:"carried"/stale:true`、压制该资产
+  alert），其余一律 throw 让 run 显式失败。这是有意的、留痕的偏离，
+  理由：对钱的误报比漏一轮刷新的代价高一个量级。
+- **bot 两处二手信息被文档证伪**：alpi 线上正常用法是**完全省略**
+  `getApiKey`（BYOK 才提供且必须走 secret-manager）；"content blocks"
+  描述的是 `agent.ask(string)` 的**返回** message 形态，不是入参。
+
 ## 8. 已知盲区
 
 - 平台 API 具体签名以线上 SDK 文档为准，Skill 已把"fresh discovery、不凭

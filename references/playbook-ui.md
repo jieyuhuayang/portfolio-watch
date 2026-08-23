@@ -12,10 +12,16 @@ Data before UI, always:
    against an empty Feed gets designed around imagined data.
 2. Read the platform's pre-build checklist for Playbooks; use the design
    system (tokens/components), not ad-hoc CSS.
-3. Draft → design lint → screenshot review → README → release with correct
-   visibility. Lint and screenshot are gates, not chores: lint catches
-   contract violations, the screenshot is the only end-to-end integration
-   test of browser + Feed + auth actually composing.
+3. Draft → design lint → release → screenshot, with the README written
+   *before* release. The calibrated chain: write `index.html` and `README.md`
+   to the playbook's ALFS directory → `alva release playbook-draft` →
+   `alva lint playbook <local index.html>` (exit 0 required) →
+   `alva release playbook --readme-url` with the README's **absolute** ALFS
+   path → `alva screenshot --url <published_url>`. Lint and screenshot are
+   gates, not chores: lint catches design-contract violations, and the
+   screenshot passes only if it shows **real feed-backed values** — a blank
+   frame, headers-only table, or loading state is a data-rendering failure,
+   not a pass.
 
 ## 2. Layout contract
 
@@ -45,6 +51,14 @@ a field is missing, render an explicit gap ("—" with a tooltip), never a
 remembered or hardcoded value — a plausible stale number is strictly worse
 than a visible hole.
 
+The mechanism (calibrated): load the platform's browser SDK and read feed
+paths through its client with the viewer token
+(`AlvaToolkit.AlvaClient` + `window.alva.udf.getViewerToken()`, `api_origin`
+as `baseUrl`) — never a raw `fetch` to the filesystem API with hand-written
+auth. The SDK path works for public *and* private playbooks; the anonymous
+fetch is public-only and silently breaks the page the day visibility
+changes.
+
 ## 3. README contract
 
 The README ships with the release and states, in the owner's language:
@@ -56,8 +70,15 @@ product.
 
 ## 4. Privacy and sharing
 
-Default visibility: **private**. This is wealth data; the burden of proof is
-on sharing, never on hiding.
+Default visibility: **as private as the tier allows**. This is wealth data;
+the burden of proof is on sharing, never on hiding. Private *released*
+playbooks are a paid-tier feature (the gateway denies `private`/`paid` for
+free accounts); on free tier the honest ladder is **draft** (not published)
+→ **share-safe release** (public, but only shapes/ratios) → paid-tier
+private release. Never close the gap by publishing real balances, and never
+flip a backing feed public with raw filesystem grants — feed visibility goes
+through the feed's own visibility command so the record and permissions move
+together.
 
 When the user asks to share, offer two explicit modes:
 

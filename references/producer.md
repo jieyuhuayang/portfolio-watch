@@ -13,58 +13,95 @@ are computed and change is judged.
   async IIFE, `(async () => { ... })();`, and do all async work inside it.
   Use the platform modules for HTTP, storage, secrets, data skills, and
   inference.
-- **Verify against current SDK docs before writing code.** Module names and
-  signatures below are structural pseudocode; the platform's own reference
-  (`sdk docs` / CLI help) is the contract. A producer written from memory of
-  an older SDK is the #1 cause of "works in chat, dies on schedule".
+- **Verify against current SDK docs before writing code.** Signatures in this
+  file were calibrated against the platform docs at time of writing, but the
+  platform's own reference (`alva sdk doc` / CLI help / skill references) is
+  the contract. A producer written from memory of an older SDK is the #1
+  cause of "works in chat, dies on schedule".
+- **Fail fast on required inputs; degrade only declared partial states.** The
+  platform's guidance is to let unexpected failures throw — a visible failed
+  run beats silently-corrupt data, so never wrap fetches in catch blocks that
+  continue with empty arrays or fabricated fallbacks. This skill's carry-last-
+  price ladder is a *narrow, explicit* exception for per-asset price gaps: the
+  gap is written as `pricing:"carried" / stale:true` (visible state, not a
+  swallowed error), alerts for that asset are suppressed, and anything beyond
+  that — account read failure, majority-stale pricing, invalid response
+  shapes — throws and surfaces as a failed run.
 
 ## 2. Run structure (annotated template)
 
 ```js
-// portfolio-watch producer — structural template.
-// Resolve real module names/signatures from current SDK docs before use.
-// The whole script is one async IIFE: the runtime rejects top-level await.
+// portfolio-watch producer — Feed SDK shapes calibrated against the current
+// docs; helper functions (priceAssets, computeSnapshot, …) are this skill's
+// structure, not platform API. Re-verify module surfaces on build.
 
-(async () => {
-  const out = feedWriter();                   // feed writer  (resolve real module)
-  const kv  = kvStore();                      // KV state     (resolve real module)
+const { Feed, feedPath, makeDoc, num, str, alertOutput } = require("@alva/feed");
 
-  // ── 1. Account truth ────────────────────────────────────────────
-  const balances = await readBinanceSpotBalances();
-  // Auth failure? → degrade per binance-portfolio.md §5:
-  // carry last snapshot, stale banner, ONE `connection` alert, return.
+const feed = new Feed({ path: feedPath("portfolio-watch") });
+// Declare ALL outputs up front — never conditionally, never inside run().
+feed.def("positions", { snapshot: makeDoc(/* per-asset fields */) });
+feed.def("portfolio_nav", { series: makeDoc(/* nav fields */) });
+feed.def("events", { log: makeDoc(/* event fields */) });
+feed.def("alerts", {
+  log: makeDoc(/* audit-trail fields — regular output */),
+  digest: alertOutput(                       // the ONE delivered output
+    makeDoc("Alert digest", "Material-change digest",
+      [str("title"), str("body")])),         // root `body` required by platform
+});
 
-  // ── 2. Pricing (data skills, fresh discovery) ───────────────────
-  const priced = await priceAssets(balances);
-  // per-asset failure → pricing:"carried", stale:true, NO alerts for it.
-  // >50% of NAV stale → treat as run-level failure: write nav row with
-  // stale_count, suppress ALL alerts this run. Never judge a portfolio
-  // you can only half see.
+(async () => {                               // no top-level await in jagent
+  await feed.run(async (ctx) => {
+    // ── 1. Account truth ──────────────────────────────────────────
+    const balances = await readBinanceSpotBalances();
+    // Auth failure? → degrade per binance-portfolio.md §5:
+    // carry last snapshot, stale banner, ONE `connection` alert, return.
 
-  // ── 3. Bounded history ──────────────────────────────────────────
-  const prev    = await out.read("portfolio_nav", { last: 1 });
-  const nav24   = await out.read("portfolio_nav", { nearest: hoursAgo(24) });
-  const nav30d  = await out.read("portfolio_nav", { window: days(30) });
-  const sigmas  = await getOrRefreshSigmas(kv, priced);   // daily refresh
+    // ── 2. Pricing (data skills, fresh discovery) ─────────────────
+    const priced = await priceAssets(balances);
+    // per-asset failure → pricing:"carried", stale:true, NO alerts for it.
+    // >50% of NAV stale → write the nav row with stale_count, suppress ALL
+    // alerts this run. Never judge a portfolio you can only half see.
 
-  // ── 4. Deterministic computation ────────────────────────────────
-  const snapshot = computeSnapshot(priced, sigmas);        // positions rows
-  const navRow   = computeNav(snapshot, nav24, nav30d);    // nav row
+    // ── 3. Bounded history (real read surface: last/first/range) ──
+    const nav    = ctx.self.ts("portfolio_nav", "series");
+    const prev   = await nav.last(1);
+    const now    = Date.now();
+    // No nearest-timestamp API: read a bounded window, pick closest row.
+    const near24 = await nav.range(now - 26 * 3600e3, now - 22 * 3600e3);
+    const win30d = await nav.range(now - 30 * 86400e3, now);
+    // KV values are raw strings — JSON round-trip structured state.
+    const sigmas = JSON.parse((await ctx.kv.load("sigma20d")) || "{}");
 
-  // ── 5. Evidence (the ONLY LLM step) ─────────────────────────────
-  const events = await synthesizeEvents(snapshot);         // see §3
+    // ── 4. Deterministic computation ──────────────────────────────
+    const snapshot = computeSnapshot(priced, sigmas);      // positions rows
+    const navRow   = computeNav(snapshot, near24, win30d); // nav row
 
-  // ── 6. Judgment + novelty gate ──────────────────────────────────
-  const candidates = evaluateAlertRules(snapshot, navRow, events); // alerts.md
-  const survivors  = await noveltyGate(kv, candidates);            // alerts.md
+    // ── 5. Evidence (the ONLY LLM step) ───────────────────────────
+    const events = await synthesizeEvents(ctx, snapshot);  // see §3
 
-  // ── 7. Persist (order matters: data first, alerts last) ─────────
-  await out.write("positions", snapshot);
-  await out.append("portfolio_nav", navRow);
-  await out.append("events", events.fresh);
-  await out.append("alerts", survivors);      // platform delivers these
-  await updateFingerprints(kv, survivors);    // AFTER successful write —
-  // if the alert write failed, fingerprints must not claim it was sent.
+    // ── 6. Judgment + novelty gate ────────────────────────────────
+    const candidates = evaluateAlertRules(snapshot, navRow, events);
+    const survivors  = await noveltyGate(ctx.kv, candidates); // alerts.md
+
+    // ── 7. Persist (order matters: data first, alerts last) ───────
+    const runTs = now;                       // batch: all rows share run ts
+    await ctx.self.ts("positions", "snapshot")
+      .append(snapshot.map(r => ({ date: runTs, ...r })));
+    await ctx.self.ts("portfolio_nav", "series")
+      .append([{ date: runTs, ...navRow }]);
+    await ctx.self.ts("events", "log")
+      .append(events.fresh);                 // date = event PUBLISH time
+    await ctx.self.ts("alerts", "log")
+      .append(survivors.map(s => ({ date: runTs, ...s })));  // audit trail
+    if (survivors.length) {
+      // Platform contract: at most ONE record per declared source per run.
+      await ctx.self.ts("alerts", "digest")
+        .append([{ date: runTs, ...composeDigest(survivors) }]);
+    }
+    await ctx.kv.put("fingerprints", JSON.stringify(nextFingerprints));
+    // Fingerprints commit AFTER the alert writes — if the alert write
+    // failed, fingerprints must not claim it was sent.
+  });
 })();
 ```
 
@@ -88,24 +125,33 @@ event.
 alpi does exactly one job here: turn fetched evidence into classified,
 summarized events.
 
-Structural shape of the call (**illustrative, not a signature** — resolve the
-real API from the current SDK docs before writing code; field names below
-follow the platform's documented layout at time of writing):
+Call shape, calibrated against the current alpi docs (`@alva/pi`) — re-verify
+on build:
 
 ```js
-// Agent behavior config nests inside initialState; credentials sit outside.
+const { Agent, Type } = require("@alva/pi");
+
 const agent = new Agent({
-  getApiKey: /* platform-provided key resolution — outer level, not state */,
-  initialState: {
+  // NO getApiKey in the online runtime: jagent injects platform credentials
+  // host-side. getApiKey exists only for bring-your-own-key, and then it must
+  // load from require("secret-manager") — never an inline key.
+  initialState: {                          // behavior config nests here
     systemPrompt: MATERIALITY_PROMPT,      // the cage, verbatim below
-    tools: [fetchVerifiedSource, readFeedHistory],
-    thinkingLevel: /* per SDK docs */,
+    tools: [                               // adapters, one job each
+      { name: "fetchVerifiedSource", description: "…",
+        parameters: Type.Object({ url: Type.String() }),
+        execute: async (_id, { url }) => ({
+          content: [{ type: "text", text: await fetchSource(url) }] }) },
+      /* readFeedHistory … */
+    ],
+    // thinkingLevel: omit to use the runtime default
   },
 });
-// message is a content-blocks object, not a bare string:
-const reply = await agent.send({
-  message: { content: [{ type: "text", text: evidenceBundle }] },
-});
+
+// ask() takes a plain string; the RESPONSE message is content blocks:
+const { message } = await agent.ask(evidenceBundle);
+const text = message.content
+  .filter((b) => b.type === "text").map((b) => b.text).join("");
 ```
 
 Configuration principles:
@@ -129,6 +175,12 @@ The boundary rule: **any number a user can see travels from API → arithmetic
 `events.materiality` and `events.synopsis` — words, not numbers.
 
 ## 4. Verification before scheduling
+
+Manual verification uses **`alva run`** (`--entry-path` at the feed's src
+path) — it exercises the script without backend alert fanout. Do **not**
+"test" with `alva deploy trigger`: trigger is not a dry run, and because
+publishing an automation creates the owner's alert binding immediately, a
+trigger can deliver a real notification.
 
 Run manually twice, minutes apart, and check:
 

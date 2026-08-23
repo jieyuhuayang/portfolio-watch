@@ -15,6 +15,14 @@ Isolation is the default; reuse is an informed, user-requested exception.
 
 ## 1. Output groups
 
+Each group below maps to a documented Feed SDK data-modeling pattern:
+`positions` is a tabular versioned batch (all rows share the run timestamp;
+the platform auto-groups same-date rows and flattens them on read),
+`portfolio_nav` is a time series, `events` is an event log keyed by natural
+event time, and `alerts` pairs an event-log audit trail with a declared
+alert output. Never name a group `data` — the synth mount already is
+`data/`, and you would get `data/data/...` paths.
+
 ### `positions` — versioned per-run batch
 
 One row per held asset (plus one `OTHER` dust row), replaced each run.
@@ -70,15 +78,21 @@ event's own identity, not by run.
 | `materiality` | enum | `high` \| `medium` \| `low` (alpi-classified, prompt in `producer.md`) |
 | `synopsis` | string | alpi 1–2 sentence synthesis of the fetched source |
 
-### `alerts` — declared alert output
+### `alerts` — audit log + declared digest (two outputs, one group)
 
-This group *is* the notification contract: the platform delivers what lands
-here. Only novelty-gate survivors are written (gate in `alerts.md`).
+The platform's alert contract (Feed SDK, calibrated): an output opted into
+delivery by wrapping its TypeDoc in **`alertOutput(...)`** must carry a root
+`body` string (`title` optional), and a run may return **at most one alert
+record per declared source**. That constraint decides the shape — one output
+cannot be both the full audit trail and the notification:
+
+**`alerts/log` — audit-log output (regular, not alert-declared).** Every
+novelty-gate survivor is appended here as its own row. This is the Playbook's
+alert timeline and the record of what the watch judged, delivered or not.
 
 | Field | Type | Notes |
 |---|---|---|
 | `alert_id` | string | fingerprint (see below) — doubles as dedup key |
-| `ts` | timestamp | when the judgment was made |
 | `subject` | string | `asset:BTC` \| `portfolio` \| `system` |
 | `kind` | string | `price_move` \| `drawdown` \| `concentration` \| `depeg` \| `news` \| `connection` |
 | `state` | string | normalized current state, e.g. `drawdown_band:10-15` |
@@ -87,9 +101,30 @@ here. Only novelty-gate survivors are written (gate in `alerts.md`).
 | `headline` | string | one sentence: what changed and how much |
 | `detail` | string | why it matters + what to look at next |
 
+(Row `date` = judgment time; multiple survivors in one run share it and are
+auto-grouped by the platform.)
+
+**`alerts/digest` — the declared alert output** (wrapped in `alertOutput()`).
+At most one record per run, composed from all survivors, ordered by severity:
+
+| Field | Type | Notes |
+|---|---|---|
+| `title` | string | e.g. "Portfolio watch: 2 changes (1 critical)" |
+| `body` | string | **required by platform** — severity-ordered digest lines, percentages not absolute values |
+| `actions` | — | optional `messageActionsField()`: an `openUrlAction` to the Playbook |
+
+A quiet run appends to neither output. The platform's one-record-per-source
+rule is why the skill composes a digest instead of pushing N pings — the
+product judgment and the API constraint agree here.
+
 ## 2. KV state — the system's memory
 
-Small keyed values, read at the start of every run:
+Small keyed values, read at the start of every run, via the Feed SDK's
+`ctx.kv.load(key)` / `ctx.kv.put(key, value)`. **Values are raw strings** —
+serialize structured state with `JSON.stringify` and parse defensively on
+load. Keep separate watermarks for sources with different cadences (prices
+hourly, sigma daily): a shared watermark silently filters the slower source
+forever after the first run.
 
 - `fingerprint:<subject>:<kind>` → last **notified** state + severity + ts.
   The novelty gate compares against *notified* state, not merely previous
@@ -120,6 +155,20 @@ Consumers and the producer read **windows, not everything**: last run for
 novelty, ~24h for P&L, 20d for σ, 30d for drawdown. Windows are decision
 parameters, chosen per judgment — unbounded reads grow without limit and turn
 "compare against normal" into "compare against noise".
+
+The real read surface (calibrated): in-script,
+`ctx.self.ts(group, output).last(n, before?)` / `first(n, after?)` /
+`range(fromMs, toMs)` / `lastDate()` / `count()`; from CLI/browser, the
+virtual path suffixes `@last/{n}`, `@range/{startMs}..{endMs}`,
+`@before/{ts_ms}/{limit}`, `@after/{ts_ms}/{limit}`, `@count`. There is no
+"nearest timestamp" lookup — implement "the row nearest 24h ago" with a
+bounded `range`/`before` read and pick the closest row yourself. `@last`
+returns records oldest-first, and `last(N)` limits unique *timestamps*: a
+grouped batch expands to more rows on read.
+
+One platform behavior doubles as a safety net: `append()` deduplicates by
+`date` (ON CONFLICT DO UPDATE), so a retried run that re-appends the same
+timestamps converges instead of duplicating history.
 
 ## 5. Schema evolution
 

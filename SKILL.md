@@ -111,8 +111,12 @@ Apply these unless the user specified otherwise; report them in the summary:
   evaluation runs on every refresh.
 - **Alert sensitivity**: `normal` preset (see `references/alerts.md`; presets
   are `calm` / `normal` / `sensitive`).
-- **Visibility**: **private**. A portfolio watch contains real wealth data;
-  it is never public by default. Sharing is an explicit flow (§6).
+- **Visibility**: **as private as the account's tier allows.** A portfolio
+  watch contains real wealth data. Private *released* playbooks are a
+  paid-tier feature; on a free-tier account the honest choices are to stop at
+  **draft** (pre-publication state) or to release a **share-safe** page
+  (§6) — never to resolve the tier limit by silently publishing real
+  balances. Say which of the three the user is getting and why.
 
 ## 3. Feed: the contract everything else depends on
 
@@ -163,9 +167,17 @@ forgive a quiet bug, not a false alarm about their money.
 
 ## 5. Automation: make it a standing service
 
-1. Verify the producer manually **twice** (different times) before scheduling;
-   confirm the second run reads the first run's history correctly.
-2. Schedule at the chosen cadence; bind the alert output.
+1. Verify the producer manually **twice** (different times) with the
+   platform's non-delivering run command before scheduling; confirm the
+   second run reads the first run's history correctly. Never "test" with the
+   automation's trigger command — it uses production delivery semantics and
+   can send a real alert.
+2. Deploy the producer on the chosen cadence with notification capability
+   enabled, then publish the automation **once** (publish is create-only;
+   updates go through the update command, never delete-and-recreate).
+   Publishing creates the owner's alert binding and by default starts the
+   producer once — decide deliberately whether that first auto-run or a
+   skip-and-route path fits, and don't run both.
 3. Pass the platform's pre-publish checks — treat them as hard gates, not
    suggestions. "It ran once" and "it is a publishable product" are different
    claims.
@@ -184,7 +196,8 @@ Build the Playbook per `references/playbook-ui.md`. Non-negotiables:
 - Follow the design system; run the design lint; take the screenshot; ship
   the README (what it watches, thresholds in force, update cadence, known
   blind spots). The README is the method's honest label, not decoration.
-- **Privacy**: private by default. If the user wants to share, offer
+- **Privacy**: as private as the tier allows (§2) — private release on paid
+  tiers, draft or share-safe on free tier. If the user wants to share, offer
   **share-safe mode**: percentages and shapes only — weights, % moves,
   drawdown — no absolute values. Remixers get the template and bind their
   own account; they never see the original owner's data.
@@ -229,7 +242,10 @@ Do not report success until every line is true:
          destination (their chosen messaging channel or verified email).
 - [ ] One test alert delivered — and only one (dedup verified) — checked
       *after* the four gates above, so a delivery failure points at the gate
-      that broke instead of "alerts don't work".
+      that broke instead of "alerts don't work". Delivery evidence is the
+      platform's alert delivery history recording the run as **sent** — a
+      written alert record alone is not proof, and neither is a successful
+      config update.
 - [ ] User told: what will alert, how often it refreshes, which defaults were
       applied, and how to tune sensitivity.
 
