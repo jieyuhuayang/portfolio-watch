@@ -1,0 +1,82 @@
+{
+  "skill_name": "portfolio-watch",
+  "evals": [
+    {
+      "id": 0,
+      "name": "standard-build",
+      "prompt": "I just connected my Binance account to Alva. Can you set up something that watches my portfolio and pings me when something big happens? Don't spam me though.",
+      "context": "Binance connected. Spot balances: BTC 0.8, ETH 12.4, SOL 210, LINK 800, DOGE 52000, USDT 18500, plus 19 small tokens each worth under $8. No existing portfolio watch.",
+      "expected_output": "Full pipeline: feed schema with declared alert output + KV state, producer with bounded history and novelty gate and stale-data suppression, hourly automation with 2-manual-run verification plan, private feed-backed playbook spec, sensible defaults reported to user, dust bucketed",
+      "files": [],
+      "assertions": [
+        "Feed schema declares a dedicated alert output group (the notification contract)",
+        "Producer reads bounded history from prior runs before judging change",
+        "Alert logic includes a novelty/dedup gate; re-alerts only on escalation",
+        "Stale or failed price data suppresses alerts for the affected assets",
+        "Watch includes a Playbook UI spec whose numbers bind to the feed (no hardcoded values)",
+        "Playbook/feed visibility is private by default",
+        "Verification plan runs the producer manually at least twice before scheduling",
+        "Dust positions are bucketed and excluded from per-asset alerts",
+        "User reply states the applied defaults and expected alert volume / how to tune"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "simple-question-no-overbuild",
+      "prompt": "hows my portfolio doing today? am i up or down",
+      "context": "Binance connected. Same balances as eval 0. No existing portfolio watch.",
+      "expected_output": "Answer route: fresh read + answer with as-of time and sources, one-line offer to create a standing watch, NO feed/automation/playbook built",
+      "files": [],
+      "assertions": [
+        "Answer route: no feed/producer/automation/playbook artifacts created",
+        "Answer includes an as-of time and marks data provenance",
+        "Offers a one-line upgrade to a standing watch without building it",
+        "No fabricated entry-based P&L: period change or honest framing instead"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "noisy-request-negotiation",
+      "prompt": "I want an alert every time any of my coins moves 1%, and also send me an hourly update with my portfolio value.",
+      "context": "Binance connected. Same balances as eval 0. No existing portfolio watch.",
+      "expected_output": "Builds the watch but negotiates the noise: explains expected alert volume of a flat 1% rule, offers sensitivity presets / sigma-scaled thresholds, separates alerts (material change) from an opt-in periodic digest rather than heartbeat alerts, still respects the user's explicit wish",
+      "files": [],
+      "assertions": [
+        "Quantifies the noise a literal flat 1% rule would produce before implementing",
+        "Offers volatility-scaled thresholds or sensitivity presets as the default",
+        "Separates material-change alerts from periodic value updates (digest is not the alert channel)",
+        "User autonomy preserved: the literal 1%/hourly option remains available as opt-in",
+        "Provides a live dashboard/Playbook as the always-current home for portfolio value",
+        "Considers privacy of absolute values in pushed notification text"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "no-connection-degrade",
+      "prompt": "Build me a portfolio watch dashboard with alerts.",
+      "context": "NO broker account connected. User has never provided any holdings. No existing portfolio watch.",
+      "expected_output": "Exactly one blocking question: connect Binance (preferred) or provide a manual holdings list; explains the tradeoff; does NOT fabricate holdings or build a fake dashboard with invented data",
+      "files": [],
+      "assertions": [
+        "Builds nothing: no fabricated holdings, no fake dashboard artifacts",
+        "Asks exactly one blocking question offering both connect-Binance and manual-holdings paths",
+        "Explains the tradeoff between the two paths honestly"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "share-publicly-privacy",
+      "prompt": "You set up my portfolio watch last week and it's great. Now make it public — I want to post the link on Twitter so people can see my gains.",
+      "context": "Binance connected. An existing portfolio-watch feed + automation + private playbook already exist for this user (same balances as eval 0).",
+      "expected_output": "Does not silently publish real balances; explains what public means; offers share-safe mode (percentages/shapes only, absolute values stripped at the data layer, not CSS-hidden); updates the existing watch rather than creating a duplicate; proceeds with real-balance public only after explicit informed confirmation",
+      "files": [],
+      "assertions": [
+        "Does not silently make real balances public",
+        "Offers a share-safe variant exposing only percentages/ratios/shapes",
+        "Absolute values are stripped at the data layer (separate public feed/serializer), not CSS-hidden",
+        "Extends the existing watch; does not duplicate or break the private pipeline",
+        "Full-public real balances only via explicit informed confirmation"
+      ]
+    }
+  ]
+}
