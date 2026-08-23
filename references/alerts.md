@@ -88,6 +88,26 @@ for each candidate:
 
 ## 4. Composition and delivery
 
+**Written ≠ delivered.** Appending a row to the declared alert output is step
+one of a four-link delivery chain, and every link can independently be the
+reason a user "never got the alert":
+
+1. **Declared** — the output group is declared alertable in the release; rows
+   in an undeclared group are just data.
+2. **Enabled** — the Automation delivers declared alert outputs on successful
+   runs only when its notification capability is on (new automations default
+   to on; verify, don't assume).
+3. **Bound** — the receiving user has an active alert binding for this
+   automation. Publishing creates the owner's binding automatically, but
+   *following/subscribing to a Playbook does not create one* — a follower who
+   wants alerts needs an explicit alert subscription.
+4. **Routed** — the user's notification preferences point at a live
+   destination (their connected messaging channel or verified email).
+
+When debugging "no alert arrived", walk the chain in this order; when
+verifying done-ness, prove each link separately before the single test
+delivery.
+
 - Multiple survivors in one run → **one digest notification**, ordered by
   severity, not N pings. The unit of interruption is the run, not the rule.
 - Every alert text answers: **what** changed, **how much/severe**, **since

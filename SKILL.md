@@ -197,7 +197,20 @@ Do not report success until every line is true:
 - [ ] Automation scheduled; run history green; alert output bound.
 - [ ] Playbook released: lint passed, screenshot verified, README current,
       visibility private (or share-safe explicitly chosen).
-- [ ] One test alert delivered — and only one (dedup verified).
+- [ ] Alert delivery chain verified **gate by gate** — a written alert row is
+      not a delivered notification. All four must hold, in order:
+      1. the declared alert output exists and the test alert row landed in it;
+      2. the Automation's notification capability is enabled (successful runs
+         deliver their declared alert outputs);
+      3. the user holds an **active alert binding** for this automation —
+         publishing creates the owner's binding, but verify it rather than
+         assume it, and remember that following a Playbook does **not**
+         subscribe anyone to its alerts;
+      4. the user's channel preference routes notifications to a real
+         destination (their chosen messaging channel or verified email).
+- [ ] One test alert delivered — and only one (dedup verified) — checked
+      *after* the four gates above, so a delivery failure points at the gate
+      that broke instead of "alerts don't work".
 - [ ] User told: what will alert, how often it refreshes, which defaults were
       applied, and how to tune sensitivity.
 
