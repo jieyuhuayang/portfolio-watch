@@ -1,0 +1,20 @@
+════ alert history after trigger #1 ════
+{
+  "feed_path": "/alva/home/lx79d/feeds/portfolio-watch-demo",
+  "items": [
+    {
+      "created_at": 1787508758,
+      "event_type": "feed_alert_ready",
+      "feed_id": "27738",
+      "id": "450725",
+      "message": "Portfolio watch: 1 change\n\n[INFO] Test alert — delivery chain verification — Sent once to prove the pipeline; the novelty gate suppresses repeats.",
+      "status": "sent",
+      "user_id": "2091586087347310592",
+      "delivery_provider": "web"
+    }
+  ],
+  "next_cursor": ""
+}
+
+════ digest count ════
+2

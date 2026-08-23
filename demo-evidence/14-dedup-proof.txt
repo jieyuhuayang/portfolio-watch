@@ -1,0 +1,5 @@
+════ alert history after trigger #2 (must still be exactly 1 sent row) ════
+history rows: 1
+- sent web 'Portfolio watch: 1 change\n\n[INFO] Test alert — delivery chai'
+digest @count:
+2

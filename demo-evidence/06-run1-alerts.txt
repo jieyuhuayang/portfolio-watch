@@ -1,0 +1,22 @@
+── alerts/log @last/5 ──
+[
+  {
+    "date": 1787508543536,
+    "alert_id": "portfolio:concentration:top_weight:above-40",
+    "subject": "portfolio",
+    "kind": "concentration",
+    "state": "top_weight:above-40",
+    "severity": "info",
+    "evidence_ts": "2026-08-23T18:09:03.536Z",
+    "headline": "Top position is 44% of the portfolio",
+    "detail": "Concentration above the 40% attention line."
+  }
+]
+── alerts/digest @last/3 ──
+[
+  {
+    "date": 1787508543536,
+    "title": "Portfolio watch: 1 change",
+    "body": "[INFO] Top position is 44% of the portfolio — Concentration above the 40% attention line."
+  }
+]

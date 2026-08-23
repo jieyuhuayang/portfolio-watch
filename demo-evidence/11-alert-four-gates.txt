@@ -1,0 +1,42 @@
+════ GATE 1: declared alert output (digest records exist from alva run) ════
+[
+  {
+    "date": 1787508543536,
+    "title": "Portfolio watch: 1 change",
+    "body": "[INFO] Top position is 44% of the portfolio — Concentration above the 40% attention line."
+  }
+]
+
+════ GATE 2: producer notify capability (push_notify on cronjob) ════
+{
+ "id": 32066,
+ "name": "portfolio-watch-demo",
+ "push_notify": true,
+ "status": "active",
+ "cron_expression": "0 * * * *"
+}
+
+════ GATE 3: active alert binding (owner, created by publish) ════
+1 alert(s):
+
+• portfolio-watch-demo  [ACTIVE]
+    target: FEED 27738
+    channel: 5025
+    kind: FEED_ALERT
+    automation status: ACTIVE
+    used by: 0
+
+════ GATE 4: delivery destination ════
+{
+  "isEnabled": true,
+  "alvaChannels": [
+    {
+      "id": "5025"
+    }
+  ],
+  "email": {
+    "isEnabled": false,
+    "isAvailable": false,
+    "address": null
+  }
+}

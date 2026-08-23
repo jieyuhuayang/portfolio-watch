@@ -1,0 +1,23 @@
+{
+  "discord_username": "",
+  "home_path": "/alva/home/lx79d",
+  "id": "2091586087347310592",
+  "imessage_username": "",
+  "slack_username": "",
+  "subscription_tier": "pro",
+  "telegram_username": "",
+  "toolkit_min_version": "0.1.0",
+  "username": "lx79d",
+  "whatsapp_username": "",
+  "active_im_provider": "",
+  "_meta": {
+    "profile": "default",
+    "endpoint": "https://api-llm.prd.alva.ai",
+    "arrays_jwt": {
+      "exists": true,
+      "expires_at": 1787767158,
+      "renewal_needed": false,
+      "tier": "SUBSCRIPTION_TIER_PRO"
+    }
+  }
+}

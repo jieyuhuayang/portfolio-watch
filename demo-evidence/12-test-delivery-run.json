@@ -1,0 +1,15 @@
+{
+  "run": {
+    "created_at": "2026-08-23T18:12:38.145042Z",
+    "credits_used": 1,
+    "cronjob_id": 32066,
+    "duration_ms": 2141,
+    "error": "",
+    "finished_at": "2026-08-23T18:12:38.145042Z",
+    "id": 24700363,
+    "status": "completed",
+    "workflow_run_id": "263322d8-806c-4eb3-827d-fcb5de64ef68"
+  },
+  "state": "COMPLETED",
+  "workflow_run_id": "263322d8-806c-4eb3-827d-fcb5de64ef68"
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "UNAVAILABLE",
+    "message": "playbook dependency unavailable",
+    "status": 503
+  }
+}

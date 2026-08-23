@@ -1,0 +1,3 @@
+ERROR  required-script-fragments  playbook (when script contains: 'echarts.init') requires <script> to contain 'requestAnimationFrame'. — Pages using ECharts must defer init/resize via requestAnimationFrame — otherwise a 0-width or display:none container at first render compresses the canvas.
+
+1 error(s), 0 warning(s), 0 info

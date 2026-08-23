@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Crypto Portfolio Watch (Demo)</title>
+<link rel="stylesheet" href="https://alva-ai-static.b-cdn.net/design-system/v1/design-system.css" />
+<script src="https://unpkg.com/@alva-ai/toolkit/dist/browser.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  html { height: 100%; overflow: hidden; }
+  body { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--b0-page); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: var(--spacing-xxs);
+    font-size: 12px; line-height: 20px; color: var(--text-n7);
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: var(--radius-ct-max); background: var(--main-m3); }
+  .status-dot.partial { background: var(--chart-orange1-main); }
+  .status-dot.stale { background: var(--main-m4); }
+
+  .alert-item { padding: var(--spacing-m) 0; }
+  .alert-item + .alert-item { border-top: 0.5px solid var(--line-l12); }
+  .alert-head { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
+  .alert-sev {
+    font-size: 11px; letter-spacing: 0.11px; line-height: 18px;
+    padding: 0 var(--spacing-xs); border-radius: var(--radius-ct-min);
+    background: var(--grey-g1); color: var(--text-n7);
+  }
+  .alert-sev.critical { background: var(--main-m4-10); color: var(--main-m4); }
+  .alert-headline { font-size: 14px; line-height: 22px; color: var(--text-n9); }
+  .alert-time { font-size: 12px; color: var(--text-n5); }
+  .alert-detail { font-size: 12px; line-height: 20px; color: var(--text-n7); margin-top: var(--spacing-xxs); }
+
+  .method-body p, .method-body li { font-size: 13px; line-height: 22px; color: var(--text-n7); }
+  .method-body strong { font-weight: 500; color: var(--text-n9); }
+  .method-body ul { padding-left: var(--spacing-l); margin: var(--spacing-xs) 0; }
+</style>
+</head>
+<body>
+<div class="playbook-container">
+  <div class="widget-grid">
+
+    <!-- KPI row: 2+2+2+2 -->
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Portfolio Value</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">NAV (USDT-quoted)</div>
+        <div id="kpi-nav" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">24h Change</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">vs ~24h ago</div>
+        <div id="kpi-pnl" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Drawdown</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">from 30d high</div>
+        <div id="kpi-dd" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Data Status</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-label">loading…</span></div>
+        <div id="status-asof" style="font-size:11px;color:var(--text-n5);margin-top:var(--spacing-xxs);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- NAV chart -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">NAV</span>
+        <span class="widget-timestamp" id="chart-asof"></span>
+      </div>
+      <div class="chart-body chart-dotted-background">
+        <div id="chart-nav" style="width:100%;height:320px;"></div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Holdings table -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Holdings</span>
+        <span class="widget-timestamp" id="holdings-note">holdings as declared (manual list)</span>
+      </div>
+      <div class="table-card" id="holdings-table">
+        <div class="table-row table-header">
+          <div class="table-cell">Asset</div>
+          <div class="table-cell">Qty</div>
+          <div class="table-cell">Price</div>
+          <div class="table-cell">Value</div>
+          <div class="table-cell">Weight</div>
+          <div class="table-cell">24h</div>
+          <div class="table-cell">7d</div>
+          <div class="table-cell">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert timeline -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Alert Timeline</span>
+        <span class="widget-timestamp">silence means nothing material happened</span>
+      </div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body" id="alert-list" style="width:100%;">
+          <div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">loading…</div></div>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Method panel -->
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">Method</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p><strong>What this watches.</strong> A user-declared crypto holdings list
+          (BTC, ETH, SOL, USDT — manual mode: quantities are maintained by the owner,
+          not read from an exchange account). Prices refresh hourly from Binance spot
+          USDT klines via Alva data skills; every number on this page is read from the
+          feed at view time.</p>
+          <p><strong>Alert rules in force</strong> (preset: <strong>normal</strong>) — alerts fire on
+          state changes, never on states, and repeats are suppressed by a novelty gate:</p>
+          <ul>
+            <li>24h move ≥ 3× that asset's own 20-day daily volatility (critical at 6×)</li>
+            <li>1h fast move ≥ 8%</li>
+            <li>Portfolio drawdown crossing −5/−10/−15/−20/−30% bands from the 30d high</li>
+            <li>Top position crossing 40% of NAV (info)</li>
+            <li>Escalation re-alerts; recovery updates this page silently</li>
+          </ul>
+          <p><strong>Failure honesty.</strong> An asset whose price fetch fails is carried at its
+          last known value and flagged (never silently zeroed), its alerts are suppressed,
+          and the Data Status pill above degrades to <em>partial</em> or <em>stale</em>. Assets with
+          no traded pair are excluded from NAV with an explicit "unpriced" status.</p>
+          <p><strong>Known blind spots.</strong> Manual holdings drift until the owner updates the
+          list; news/materiality alerts are disabled in this demo build; USDT is valued at
+          its quote-unit 1.00 (external depeg reference not wired); cost-basis P&amp;L is
+          intentionally absent — changes are period-based, never fabricated from a guessed
+          entry price.</p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Required table-column algorithm from the design spec (reset → measure →
+  // resolve → apply). Run after every table render and on resize.
+  function initTableAlignment(tableEl) {
+    var rows = tableEl.querySelectorAll(".table-row");
+    if (rows.length === 0) return;
+    var colCount = rows[0].querySelectorAll(".table-cell").length;
+    rows.forEach(function (row) {
+      row.style.removeProperty("min-width");
+      var cells = row.querySelectorAll(".table-cell");
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].style.removeProperty("flex");
+        cells[i].style.removeProperty("min-width");
+        cells[i].style.removeProperty("width");
+      }
+    });
+    var colWidths = [];
+    for (var col = 0; col < colCount; col++) {
+      var maxW = 0;
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) maxW = Math.max(maxW, cell.scrollWidth);
+      });
+      colWidths.push(maxW);
+    }
+    var totalContent = 0;
+    for (var i = 0; i < colWidths.length; i++) totalContent += colWidths[i];
+    var gapTotal = (colCount - 1) * 16;
+    var available = tableEl.clientWidth - gapTotal;
+    var resolved = [];
+    for (var col = 0; col < colCount; col++) {
+      var proportional = Math.round((colWidths[col] / totalContent) * available);
+      resolved.push(Math.max(colWidths[col], proportional));
+    }
+    var totalWidth = gapTotal;
+    for (var col = 0; col < colCount; col++) {
+      totalWidth += resolved[col];
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) cell.style.flex = "0 0 " + resolved[col] + "px";
+      });
+    }
+    rows.forEach(function (row) { row.style.minWidth = totalWidth + "px"; });
+  }
+
+  var FEED = "/alva/home/lx79d/feeds/portfolio-watch-demo/v1/data";
+  var CADENCE_MS = 3600 * 1000;
+
+  function createAlvaClientConfig() {
+    var params = new URLSearchParams(window.location.search);
+    var pbsvToken = window.alva && window.alva.udf && window.alva.udf.getViewerToken
+      ? window.alva.udf.getViewerToken() : null;
+    var apiOrigin = params.get("api_origin");
+    var cfg = {};
+    if (pbsvToken) cfg.pbsvToken = pbsvToken;
+    if (apiOrigin) cfg.baseUrl = apiOrigin.replace(/\/$/, "");
+    return cfg;
+  }
+  function readFeed(path) {
+    var client = new AlvaToolkit.AlvaClient(createAlvaClientConfig());
+    return client.fs.read({ path: FEED + path });
+  }
+  // REST returns raw rows; grouped rows arrive as {date, items:[...]}. Flatten.
+  function flatten(rows) {
+    var out = [];
+    (rows || []).forEach(function (r) {
+      if (r && Array.isArray(r.items)) {
+        r.items.forEach(function (it) { out.push(Object.assign({ date: r.date }, it)); });
+      } else if (r) out.push(r);
+    });
+    return out;
+  }
+  function fmtUsd(v) {
+    if (v == null) return "—";
+    return "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: v >= 1000 ? 0 : 2 });
+  }
+  function fmtPct(v, signed) {
+    if (v == null) return "—";
+    var p = (v * 100).toFixed(Math.abs(v) < 0.001 ? 2 : 1) + "%";
+    return signed && v > 0 ? "+" + p : p;
+  }
+  function fmtTime(ms) {
+    if (!ms) return "—";
+    return new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  }
+
+  (async function () {
+    var navRows, posRows, alertRows;
+    try {
+      navRows = await readFeed("/portfolio_nav/series/@last/168");
+      posRows = flatten(await readFeed("/positions/snapshot/@last/1"));
+      alertRows = flatten(await readFeed("/alerts/log/@last/20"));
+    } catch (e) {
+      document.getElementById("status-label").textContent = "feed read failed";
+      document.getElementById("status-dot").className = "status-dot stale";
+      return;
+    }
+    navRows = flatten(navRows);
+    var latest = navRows.length ? navRows[navRows.length - 1] : null;
+
+    // KPIs
+    if (latest) {
+      document.getElementById("kpi-nav").textContent = fmtUsd(latest.nav_usd);
+      var pnlEl = document.getElementById("kpi-pnl");
+      pnlEl.textContent = fmtPct(latest.pnl_24h, true);
+      if (latest.pnl_24h != null) pnlEl.style.color = latest.pnl_24h >= 0 ? "var(--main-m3)" : "var(--main-m4)";
+      var ddEl = document.getElementById("kpi-dd");
+      ddEl.textContent = latest.drawdown_30d > 0.0005 ? "−" + fmtPct(latest.drawdown_30d) : "0%";
+      if (latest.drawdown_30d > 0.05) ddEl.style.color = "var(--main-m4)";
+
+      var age = Date.now() - latest.date;
+      var dot = document.getElementById("status-dot"), label = document.getElementById("status-label");
+      if (age > 2 * CADENCE_MS) { dot.className = "status-dot stale"; label.textContent = "stale — last run " + fmtTime(latest.date); }
+      else if (latest.stale_count > 0 || latest.unpriced_count > 0) {
+        dot.className = "status-dot partial";
+        label.textContent = "partial — " + (latest.stale_count + latest.unpriced_count) + " asset(s) degraded";
+      } else { dot.className = "status-dot"; label.textContent = "live"; }
+      document.getElementById("status-asof").textContent = "last run " + fmtTime(latest.date);
+      document.getElementById("chart-asof").textContent = "as of " + fmtTime(latest.date);
+    }
+
+    // NAV chart (time axis; raw hex — ECharts is Canvas, CSS vars don't work)
+    var AX = {
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { fontSize: 10, color: "rgba(0,0,0,0.7)", margin: 8,
+        fontFamily: "'Delight', -apple-system, 'OPPO Sans 4.0', BlinkMacSystemFont, sans-serif" },
+      splitLine: { show: false },
+    };
+    // Defer init to a paint frame so the container has real dimensions.
+    var chart;
+    requestAnimationFrame(function () {
+      chart = echarts.init(document.getElementById("chart-nav"));
+      chart.setOption(navChartOption);
+      chart.resize();
+    });
+    var navChartOption = ({
+      grid: { top: 4, right: 4, bottom: 4, left: 4, containLabel: true },
+      tooltip: { trigger: "axis" },
+      xAxis: Object.assign({ type: "time", boundaryGap: false }, AX),
+      yAxis: Object.assign({ type: "value", scale: true }, AX),
+      series: [{
+        type: "line", showSymbol: navRows.length < 20, symbolSize: 5,
+        data: navRows.map(function (r) { return [r.date, r.nav_usd == null ? null : Math.round(r.nav_usd * 100) / 100]; }),
+        lineStyle: { color: "#49a3a6", width: 2 },
+        itemStyle: { color: "#49a3a6" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: "rgba(73,163,166,0.18)" }, { offset: 1, color: "rgba(73,163,166,0)" }]) },
+      }],
+    });
+    window.addEventListener("resize", function () {
+      if (chart) requestAnimationFrame(function () { chart.resize(); });
+    });
+
+    // Holdings table
+    var tbl = document.getElementById("holdings-table");
+    posRows.sort(function (a, b) { return (b.weight || 0) - (a.weight || 0); });
+    posRows.forEach(function (r) {
+      var status = r.pricing === "carried" ? "carried price" :
+                   r.pricing === "unpriced" ? "unpriced" :
+                   (r.move_score != null && r.move_score >= 3) ? "⚡ unusual move" : "ok";
+      var row = document.createElement("div");
+      row.className = "table-row table-body-row";
+      if (r.stale) row.style.opacity = "0.55";
+      row.innerHTML =
+        '<div class="table-cell">' + r.asset + "</div>" +
+        '<div class="table-cell">' + (r.qty == null ? "—" : r.qty) + "</div>" +
+        '<div class="table-cell">' + (r.price == null ? "—" : fmtUsd(r.price)) + "</div>" +
+        '<div class="table-cell">' + fmtUsd(r.value_usd) + "</div>" +
+        '<div class="table-cell">' + fmtPct(r.weight) + "</div>" +
+        '<div class="table-cell ' + (r.chg_24h == null ? "" : r.chg_24h >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_24h, true) + "</div>" +
+        '<div class="table-cell ' + (r.chg_7d == null ? "" : r.chg_7d >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_7d, true) + "</div>" +
+        '<div class="table-cell">' + status + "</div>";
+      tbl.appendChild(row);
+    });
+    if (typeof initTableAlignment === "function") {
+      initTableAlignment(tbl);
+      window.addEventListener("resize", function () { initTableAlignment(tbl); });
+    }
+
+    // Alert timeline (newest first)
+    var list = document.getElementById("alert-list");
+    list.innerHTML = "";
+    if (!alertRows.length) {
+      list.innerHTML = '<div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">No alerts yet — the watch has judged nothing material.</div></div>';
+    } else {
+      alertRows.slice().reverse().forEach(function (a) {
+        var item = document.createElement("div");
+        item.className = "alert-item";
+        item.innerHTML =
+          '<div class="alert-head">' +
+          '<span class="alert-sev ' + (a.severity === "critical" || a.severity === "action-needed" ? "critical" : "") + '">' + a.severity + "</span>" +
+          '<span class="alert-headline">' + a.headline + "</span>" +
+          '<span class="alert-time">' + fmtTime(a.date) + "</span></div>" +
+          '<div class="alert-detail">' + a.detail + "</div>";
+        list.appendChild(item);
+      });
+    }
+  })();
+</script>
+</body>
+</html>
