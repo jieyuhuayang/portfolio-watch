@@ -183,8 +183,10 @@ Full taxonomy, thresholds, presets, and the novelty algorithm live in
   the page silently.
 - Every alert answers: what changed, how severe, since when, based on what
   evidence, and what to look at next.
-- A scheduled run with nothing material to say writes its data and **stays
-  silent**. Never send heartbeat notifications to prove the system is alive —
+- Quiet is not paused. A run with nothing material to say **appends nothing
+  to the declared alert output** — that is the whole of its silence. Data
+  groups still refresh, the Playbook still updates, run history still shows
+  green. Never send heartbeat notifications to prove the system is alive —
   the freshness badge on the Playbook does that job.
 
 ## 8. Definition of done

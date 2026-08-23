@@ -124,3 +124,10 @@ delivery.
 Refresh success, "no change detected", watch anniversary, marketing.
 The Playbook's freshness badge proves liveness; the alert channel proves
 materiality. Mixing those two jobs destroys both.
+
+Be precise about what "staying quiet" means mechanically: the run executes
+in full — reads balances, refreshes every data group, updates the Playbook —
+and simply **does not append to the declared alert output**. Silence is a
+property of one output group, never a skipped or degraded run. If a user
+asks why they heard nothing, the answer is "the watch ran N times and judged
+nothing material", provable from run history plus an empty alert delta.
