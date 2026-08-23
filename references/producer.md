@@ -9,8 +9,10 @@ are computed and change is judged.
 - Each run starts cold: no memory of the previous run except what was written
   to the Feed/KV/ALFS. If next run needs it, persist it this run.
 - This is not Node.js: no Node built-ins, no local filesystem, no global
-  `fetch`, no top-level `await`. Use the platform modules for HTTP, storage,
-  secrets, data skills, and inference.
+  `fetch`, and **no top-level `await`** — wrap the entire script body in an
+  async IIFE, `(async () => { ... })();`, and do all async work inside it.
+  Use the platform modules for HTTP, storage, secrets, data skills, and
+  inference.
 - **Verify against current SDK docs before writing code.** Module names and
   signatures below are structural pseudocode; the platform's own reference
   (`sdk docs` / CLI help) is the contract. A producer written from memory of
@@ -21,18 +23,19 @@ are computed and change is judged.
 ```js
 // portfolio-watch producer — structural template.
 // Resolve real module names/signatures from current SDK docs before use.
+// The whole script is one async IIFE: the runtime rejects top-level await.
 
-async function run(ctx) {
-  const out = ctx.feed;                       // feed writer
-  const kv  = ctx.kv;                         // KV state
+(async () => {
+  const out = feedWriter();                   // feed writer  (resolve real module)
+  const kv  = kvStore();                      // KV state     (resolve real module)
 
   // ── 1. Account truth ────────────────────────────────────────────
-  const balances = await readBinanceSpotBalances(ctx);
+  const balances = await readBinanceSpotBalances();
   // Auth failure? → degrade per binance-portfolio.md §5:
   // carry last snapshot, stale banner, ONE `connection` alert, return.
 
   // ── 2. Pricing (data skills, fresh discovery) ───────────────────
-  const priced = await priceAssets(ctx, balances);
+  const priced = await priceAssets(balances);
   // per-asset failure → pricing:"carried", stale:true, NO alerts for it.
   // >50% of NAV stale → treat as run-level failure: write nav row with
   // stale_count, suppress ALL alerts this run. Never judge a portfolio
@@ -49,7 +52,7 @@ async function run(ctx) {
   const navRow   = computeNav(snapshot, nav24, nav30d);    // nav row
 
   // ── 5. Evidence (the ONLY LLM step) ─────────────────────────────
-  const events = await synthesizeEvents(ctx, snapshot);    // see §3
+  const events = await synthesizeEvents(snapshot);         // see §3
 
   // ── 6. Judgment + novelty gate ──────────────────────────────────
   const candidates = evaluateAlertRules(snapshot, navRow, events); // alerts.md
@@ -62,7 +65,7 @@ async function run(ctx) {
   await out.append("alerts", survivors);      // platform delivers these
   await updateFingerprints(kv, survivors);    // AFTER successful write —
   // if the alert write failed, fingerprints must not claim it was sent.
-}
+})();
 ```
 
 Write data before alerts and fingerprints after alerts: a crash mid-run must
@@ -74,7 +77,29 @@ fingerprints commit last.
 ## 3. The LLM's cage (alpi usage)
 
 alpi does exactly one job here: turn fetched evidence into classified,
-summarized events. Configuration:
+summarized events.
+
+Structural shape of the call (**illustrative, not a signature** — resolve the
+real API from the current SDK docs before writing code; field names below
+follow the platform's documented layout at time of writing):
+
+```js
+// Agent behavior config nests inside initialState; credentials sit outside.
+const agent = new Agent({
+  getApiKey: /* platform-provided key resolution — outer level, not state */,
+  initialState: {
+    systemPrompt: MATERIALITY_PROMPT,      // the cage, verbatim below
+    tools: [fetchVerifiedSource, readFeedHistory],
+    thinkingLevel: /* per SDK docs */,
+  },
+});
+// message is a content-blocks object, not a bare string:
+const reply = await agent.send({
+  message: { content: [{ type: "text", text: evidenceBundle }] },
+});
+```
+
+Configuration principles:
 
 - **System prompt** pins the role: "You classify news relevance and
   materiality for specific held crypto assets. You are given fetched source
