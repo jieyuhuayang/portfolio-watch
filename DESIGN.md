@@ -124,7 +124,50 @@ Playbook**。
   `getApiKey`（BYOK 才提供且必须走 secret-manager）；"content blocks"
   描述的是 `agent.ask(string)` 的**返回** message 形态，不是入参。
 
-## 8. 已知盲区
+## 8. 真机踩坑记录（阶段 3 实测,均有证据在 demo-evidence/）
+
+1. **`playbooks set-visibility private` 稳定返回 503** "playbook dependency
+   unavailable"（pro 账号、feed 已 private、跨 1 小时重试 5 次）。后果：
+   私有发布这一档在实测期间不可达,demo 的私有版停在 public 状态——但其
+   backing feed 是 private,匿名访客只能看到页面的诚实空态（"feed read
+   failed",见证据 19),真实数字不可见。这也侧面验证了"数据层隔离优于
+   CSS 隐藏"的设计:页面拿不到的数据就是泄露不了。
+2. **一个 cronjob 注册第二个 feed 报裸 500**(无错误语义)。绕行:share-safe
+   feed 用一个**立即暂停的 no-op 锚点 cronjob** 作注册载体,数据仍由主
+   producer 同一 run 写入——"同一时钟"的产品约束守住了,代价是平台上多一个
+   暂停的空 cronjob。若平台原生支持"一 producer 多 feed",share-safe 的
+   实现会干净得多——这是给平台的产品反馈。
+3. **平台截图服务无法进入私有 Playbook**(published_url 无 viewer token;
+   canonical URL 403,与调研期观察到的 `PLAYBOOK_PAGE_NAVIGATION_DENIED`
+   一致)。后果:私有页的"截图门"只能由 owner 浏览器目检 + 同代码路径的
+   share-safe 公开页截图替代。Skill 的 definition-of-done 因此在实践中
+   对私有页有一个已知的验证降级。
+4. **`alva run` 的 logs 字段不回传 console.error**(两次手跑 logs 均为空,
+   但数据落盘正常)。调试时应以读回 feed 数据为准,不依赖日志。
+5. **计费口径**:短脚本 run 每次约 1 credit,整个端到端(含所有验证、两次
+   投递 trigger、截图)约 30 credits——远低于预算,hourly automation 长期
+   运行的成本才是主要项(约 1 credit/run × 24/天)。
+
+## 9. v1→v2 变更清单（来源标注,与 git 历史一一对应）
+
+| # | 变更 | 来源 |
+|---|---|---|
+| 1 | 送达四条件拆分 + written≠delivered + follow≠订阅 | bot#6,实地确证 |
+| 2 | 安静≠停摆:精确为"不向声明输出追加" | bot#7,官方文档原文确证 |
+| 3 | Agent Schedule 路由行(脚本重复跑 vs Agent 重新想) | bot#2/#11,CLI 确证 |
+| 4 | Feed Scope Isolation | bot#16,官方文档确证 |
+| 5 | async IIFE + alpi 结构校准 | bot#8-10;其中两点被文档证伪后二次修正(见 §7) |
+| 6 | Tune:源码改动不重发布,publish 是 create-only | bot#5,官方文档确证 |
+| 7 | 写入幂等(平台按 date 去重作安全网) | bot#12 + SDK 文档 |
+| 8 | share-safe 三规则(同 run/脱敏镜像/先预览) | iter1 评测发现 |
+| 9 | 用户话术 vs 内部词汇("Speak the user's dialect") | 实地调研 |
+| 10 | eval-4 收紧 + eval-5/6 新增 | iter1;iter2 中 eval-4 收紧被证明有判别力 |
+| 11 | alerts 组拆分(审计日志 + alertOutput digest,平台 1 条/source/run) | 阶段 2 校准 |
+| 12 | 档位感知可见性(free: draft→share-safe;paid: private) | 阶段 2 校准 + 阶段 3 实测 |
+| 13 | fail-fast 与降级阶梯的调和(窄化 carried 为显式业务状态) | 阶段 2 校准,有意偏离,§8.1 佐证 |
+| 14 | 验证纪律:alva run(不投递)测,deploy trigger(真投递)只用于受控送达 | 阶段 2 校准 + 阶段 3 实测 |
+
+## 10. 已知盲区
 
 - 平台 API 具体签名以线上 SDK 文档为准，Skill 已把"fresh discovery、不凭
   记忆调 API"写为强制步骤，但未经真实环境冒烟。
