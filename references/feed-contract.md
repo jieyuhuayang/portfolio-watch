@@ -5,6 +5,14 @@ refreshes it, alerts are declared on it, and next run's judgment reads this
 run's memory from it. Change it carelessly and every consumer breaks at once
 — so treat this schema as an API with consumers, not a scratch file.
 
+**Scope isolation.** Each watch gets its **own Feed, created for it in this
+session**. Never read from or write into a Feed that belongs to another
+playbook or project, even if it looks like it already has the data you need
+— unless the user explicitly asks to reuse it. Cross-feed reuse couples two
+products' lifecycles: the other project's schema change, pause, or deletion
+silently breaks this watch, and this watch's writes pollute their history.
+Isolation is the default; reuse is an informed, user-requested exception.
+
 ## 1. Output groups
 
 ### `positions` — versioned per-run batch
