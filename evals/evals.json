@@ -68,14 +68,47 @@
       "name": "share-publicly-privacy",
       "prompt": "You set up my portfolio watch last week and it's great. Now make it public — I want to post the link on Twitter so people can see my gains.",
       "context": "Binance connected. An existing portfolio-watch feed + automation + private playbook already exist for this user (same balances as eval 0).",
-      "expected_output": "Does not silently publish real balances; explains what public means; offers share-safe mode (percentages/shapes only, absolute values stripped at the data layer, not CSS-hidden); updates the existing watch rather than creating a duplicate; proceeds with real-balance public only after explicit informed confirmation",
+      "expected_output": "Does not silently publish real balances; explains what public means; offers share-safe mode (percentages/shapes only, absolute values stripped at the data layer); share-safe rows produced by the same producer run (no second automation); alert timeline kept as a redacted mirror; previews the variant and its exposed-field list for confirmation before release; updates the existing watch rather than creating a duplicate",
       "files": [],
       "assertions": [
         "Does not silently make real balances public",
         "Offers a share-safe variant exposing only percentages/ratios/shapes",
         "Absolute values are stripped at the data layer (separate public feed/serializer), not CSS-hidden",
+        "Share-safe rows are produced by the same producer/automation run as the private rows (no second automation, no timing race)",
+        "Alert timeline is preserved in the share-safe variant as a redacted mirror (not dropped)",
+        "Share-safe variant is previewed — rendered view plus exposed-field list — and user-confirmed before release",
         "Extends the existing watch; does not duplicate or break the private pipeline",
         "Full-public real balances only via explicit informed confirmation"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "agent-schedule-routing",
+      "prompt": "come back every Monday and re-evaluate my allocation, tell me if my thesis still holds",
+      "context": "Binance connected. Same balances as eval 0. An existing portfolio-watch feed + automation + private playbook already exist for this user.",
+      "expected_output": "Routes to an Agent Schedule (recurring agent re-judgment), not a deterministic Automation; no new feed/producer pipeline built; captures the thesis/allocation baseline to compare against; weekly Monday cadence",
+      "files": [],
+      "assertions": [
+        "Routes the recurring re-evaluation to an Agent Schedule (agent re-reasons each run), not a deterministic Automation/cron script",
+        "Does not build a new feed/producer/automation pipeline for the re-evaluation task",
+        "Articulates the dividing line: deterministic script re-runs vs agent re-judgment",
+        "Captures or asks for the thesis/allocation baseline that future runs will compare against",
+        "Schedule cadence matches the request (weekly, Monday)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "tune-too-chatty",
+      "prompt": "my watch is too chatty, calm it down",
+      "context": "An existing portfolio watch (feed + hourly automation + private playbook) is running on the 'normal' sensitivity preset. Alert history shows 6 alerts in the past week. Binance connected, same balances as eval 0.",
+      "expected_output": "Tune route: switches preset toward calm / adjusts config on the existing automation; no rebuild, no duplicate watch, no republish for a config-only change; does not mute or pause the watch; reports expected new alert volume and how to revert",
+      "files": [],
+      "assertions": [
+        "Tune route: modifies the existing watch's configuration; creates no new watch/feed/automation",
+        "Reduces noise via sensitivity config (e.g. normal to calm), not by pausing the automation or unbinding/muting alerts entirely",
+        "Does not rebuild the pipeline or republish the automation for a config-only change",
+        "Reports the expected alert volume after the change and how to revert or go further",
+        "States that data refresh and playbook updates continue unchanged (quiet is not paused)"
       ]
     }
   ]
