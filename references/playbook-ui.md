@@ -70,6 +70,26 @@ When the user asks to share, offer two explicit modes:
   removed *from the shared Feed exposure*, not merely hidden with CSS. Data
   the page doesn't receive can't leak; data merely unstyled can.
 
+Share-safe mechanics — three rules that keep the variant honest:
+
+1. **Same run, not a second pipeline.** The share-safe rows are produced by
+   the *same producer run* that writes the private rows — one Automation,
+   one clock. A second Automation recomputing "the same" numbers on its own
+   schedule will disagree with the private page during every timing gap, and
+   a public page that contradicts the private one reads as either a bug or a
+   lie.
+2. **The alert timeline survives, redacted.** Don't drop the alert history
+   from the shared variant — it is the proof that silence means nothing
+   happened, which is exactly what a public audience needs to trust the
+   method. Mirror each alert with absolute values stripped (percentages,
+   bands, severities stay).
+3. **Preview before release, even for share-safe.** Before publishing the
+   variant, show the user the rendered preview *and the list of fields it
+   exposes*, and get an explicit yes. "Safe by construction" is the
+   designer's claim; the user is the only one entitled to decide their risk
+   posture — weights and drawdown history are still information about their
+   wealth.
+
 Never publish a public portfolio Playbook as a side effect of any other
 request. If a completion gate requires public readability, that is a signal
 the visibility choice is wrong, not a reason to flip the data public.
