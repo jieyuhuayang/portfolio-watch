@@ -1,0 +1,1315 @@
+Usage: alva <command> [options]
+
+Commands:
+  configure   Save API key and endpoint to a named profile
+  whoami      Verify credentials and show current identity
+  user        User profile operations (me)
+  fs          Filesystem operations (read, write, stat, readdir, mkdir, remove, rename, copy, symlink, readlink, chmod, grant, revoke)
+  run         Execute code in the Alva runtime
+  deploy      Cronjob management (create, list, get, update, delete, pause, resume, runs, run-logs)
+  schedule    Agent-owned named schedules (list, put, pause, resume, delete)
+  service-account  Restricted run-as identities (create, list, delete, grant, revoke)
+  release     Feed and playbook releases (feed, playbook-draft, playbook)
+  lint        Design-system lint (playbook)
+  automation  Automation management (list, inspect, publish, update, delivery, stop, resume, delete)
+  alert       Alert management (list, follows, enable, disable, history, preferences, enable-session-completed, disable-session-completed)
+  feed        Legacy automation alias (list, stop, resume, delete, set-visibility)
+  playbooks   Playbook discovery (trending, get, list) and visibility
+  functions   Playbook UDF function management (register, list, delete, invoke, allowance)
+  credits     Credit wallet and self-scoped usage history (wallet, items)
+  secrets     Secret management (create, list, get, update, delete)
+  sdk         SDK documentation (doc, partitions, partition-summary)
+  skillhub    Playbook skills (list, tags, get, file)
+  data-skills Data-skill documentation from the Arrays backend (list, summary, endpoint)
+  comments    Playbook comments (create, pin, unpin)
+  notification-history  Feed notification delivery history (list-feed)
+  notification-preferences  Notification preferences (list, enable-session-completed, disable-session-completed)
+  feedback    Submit user-confirmed Alva platform feedback (submit)
+  subscriptions       Playbook follows and feed alert subscriptions
+  remix       Save playbook remix lineage
+  portfolio   Connected-account portfolio (accounts, summary, activities)
+  markets     Company narrative and earnings context (narrative, earnings)
+  trading     Trading operations (accounts, portfolio, orders, subscriptions, equity-history, risk-rules, subscribe, unsubscribe, execute, update-risk-rules)
+  broker      Agentic order execution — venue-native passthrough to trex (accounts, quote, order, balance, positions, ...; run 'alva broker describe')
+  auth        Authentication (login)
+  screenshot  Capture a web screenshot as PNG
+  arrays      Arrays backend operations (token ensure, token status)
+
+Global options:
+  --api-key <key>        API key (overrides env and config file)
+  --base-url <url>       API base URL (overrides env and config file)
+  --profile <name>       Named profile to use (default: "default")
+  --arrays-endpoint <url>  Arrays backend URL (or ARRAYS_ENDPOINT env; default: https://data-tools.prd.space.id)
+  -v, --version        Show CLI version
+  --help               Show help (use 'alva <command> --help' for command details)
+
+Config resolution: --api-key flag > ALVA_API_KEY env > profile in ~/.config/alva/config.json
+Profile resolution: --profile flag > ALVA_PROFILE env > "default"
+
+Quick start:
+  npm install -g @alva-ai/toolkit
+  alva configure --api-key alva_your_key_here
+  alva whoami
+
+════ alva configure --help ════
+Usage: alva configure --api-key <key> [--base-url <url>] [--profile <name>]
+
+Save API credentials to ~/.config/alva/config.json (mode 0600).
+After configuring, subsequent commands use the saved key automatically.
+Multiple profiles allow switching between environments (production, staging, etc.).
+Also auto-runs 'alva arrays token ensure' to provision the server-side Arrays JWT
+(soft-fail: a network/auth failure prints a stderr warning but exit stays 0).
+
+Required:
+  --api-key <key>      Your Alva API key (starts with "alva_")
+
+Optional:
+  --base-url <url>     API base URL (default: https://api-llm.prd.alva.ai)
+  --profile <name>     Profile name to save under (default: "default")
+
+Config file format:
+  {
+    "profiles": {
+      "default": { "apiKey": "alva_...", "baseUrl": "https://api-llm.prd.alva.ai" },
+      "staging": { "apiKey": "alva_...", "baseUrl": "https://api-llm.stg.alva.ai" }
+    }
+  }
+
+Examples:
+  alva configure --api-key alva_abc123
+  alva configure --api-key alva_abc123 --base-url http://localhost:8080
+  alva configure --profile staging --api-key alva_stg_key --base-url https://api-llm.stg.alva.ai
+  alva --profile staging whoami
+
+════ alva whoami --help ════
+Usage: alva whoami [--profile <name>]
+
+Verify that your credentials are valid by calling the Alva API. Shows your
+username, subscription tier, and which profile/endpoint is being used.
+Use this after 'alva configure' to confirm everything works.
+
+Output includes active_im_provider (telegram, discord, slack, whatsapp,
+imessage, or empty) and _meta.arrays_jwt (exists, expires_at, renewal_needed,
+tier). arrays_jwt is omitted when the backend status call fails.
+
+Examples:
+  alva whoami
+  alva --profile staging whoami
+
+════ alva user --help ════
+Usage: alva user <subcommand>
+
+Subcommands:
+  me    Get the authenticated user's profile
+
+Response fields:
+  id                  User ID
+  username            Username (used in ALFS paths and playbook URLs)
+  subscription_tier   "free", "pro", or "max" — determines release flow and feature gates
+  telegram_username   Telegram display name if connected, empty otherwise
+  discord_username    Discord display name if connected, empty otherwise
+  slack_username      Slack display name if connected, empty otherwise
+  whatsapp_username   WhatsApp display name if connected, empty otherwise
+  imessage_username   iMessage display name if connected, empty otherwise
+  active_im_provider  Currently selected IM provider
+
+Examples:
+  alva user me
+
+════ alva fs --help ════
+Usage: alva fs <subcommand> [options]
+
+Subcommands:
+  read       Read a file or time series data
+  write      Write content to a file (use --data for inline, --file for upload)
+  stat       Get file metadata (name, size, mode, mod_time, is_dir)
+  readdir    List directory contents
+  mkdir      Create a directory (recursive by default)
+  remove     Delete a file or directory
+  rename     Move/rename a file
+  copy       Copy a file
+  symlink    Create a symbolic link
+  readlink   Read a symlink target
+  chmod      Change file permissions (mode is octal, e.g. 755)
+  grant      Grant access permission to a user or group
+  revoke     Revoke access permission
+
+Subcommand flags:
+  read       --path (required), [--offset <n>], [--size <n>]
+  write      --path (required), --data <text> OR --file <local-path> (one required),
+             [--append], [--mkdir-parents | --no-mkdir-parents]
+  stat       --path (required)
+  readdir    --path (required), [--recursive | --no-recursive]
+  mkdir      --path (required)
+  remove     --path (required), [--recursive | --no-recursive]
+  rename     --old-path (required), --new-path (required)
+  copy       --src-path (required), --dst-path (required)
+  symlink    --target-path (required), --link-path (required)
+  readlink   --path (required)
+  chmod      --path (required), --mode <octal> (required)
+  grant      --path (required), --subject <s> (required), --permission <p> (required)
+  revoke     --path (required), --subject <s> (required), --permission <p> (required)
+
+Path conventions:
+  ~/...                  Home-relative filesystem location (for example, --path and --link-path)
+  /alva/home/alice/...   Absolute path (required for public/unauthenticated reads)
+  Quote tilde paths to prevent shell expansion: --path "~/data" (not --path ~/data).
+
+Symlink targets:
+  Symlink target paths are stored verbatim with POSIX semantics; they are not home-expanded.
+  Use a path relative to the link's parent (for example, "real-file.txt") or a true /... absolute path.
+
+Time series reads:
+  Feed data directories are synth mounts. Their supported read suffixes are:
+    @last/{n}                    Last N data points (chronological order)
+    @range/{start_ms}..{end_ms}  Between Unix millisecond timestamps
+    @before/{timestamp_ms}/{limit}  Up to limit points before a Unix millisecond timestamp
+    @after/{timestamp_ms}/{limit}   Up to limit points after a Unix millisecond timestamp
+    @count                       Data point count
+  RFC 3339, Unix-second timestamps, @range/{duration}, and @now are not supported.
+
+Grant/revoke subjects:
+  special:user:*         Public (anyone, including unauthenticated)
+  special:user:+         Any authenticated user
+  user:<id>              Specific user by ID
+
+Examples:
+  alva fs readdir --path "~/"
+  alva fs readdir --path "~/data" --recursive
+  alva fs read --path "~/data/prices.json"
+  alva fs read --path "~/feeds/btc-ema/v1/data/metrics/prices/@last/100"
+  alva fs read --path /alva/home/alice/feeds/btc-ema/v1/data/metrics/prices/@last/10
+  alva fs write --path "~/hello.txt" --data "Hello, world!"
+  alva fs write --path "~/journal.md" --data "New entry" --append
+  alva fs write --path "~/feeds/my-feed/v1/src/index.js" --file ./local-script.js --mkdir-parents
+  alva fs stat --path "~/hello.txt"
+  alva fs mkdir --path "~/feeds/my-feed/v1/src"
+  alva fs remove --path "~/old-folder" --recursive
+  alva fs rename --old-path "~/a.txt" --new-path "~/b.txt"
+  alva fs copy --src-path "~/a.txt" --dst-path "~/b.txt"
+  alva fs chmod --path "~/script.js" --mode 755
+  alva fs grant --path "~/feeds/btc-ema" --subject "special:user:*" --permission read
+  alva fs revoke --path "~/feeds/btc-ema" --subject "special:user:*" --permission read
+  alva fs symlink --target-path "real-file.txt" --link-path "~/my-link.txt"
+  alva fs readlink --path "~/my-link.txt"
+
+════ alva run --help ════
+Usage: alva run [options]
+
+Execute JavaScript code in the Alva V8 runtime. Provide either inline code
+or a path to a script file on ALFS. Scripts have access to 250+ financial
+data SDKs, ALFS, HTTP networking, and the Feed SDK.
+
+Options:
+  --code <code>          Inline JavaScript code to execute
+  --local-file <path>    Path to a local file whose contents are sent as code
+  --entry-path <path>    Path to a script file on ALFS (home-relative)
+  --working-dir <dir>    Working directory for require() (inline code only)
+  --args <json>          JSON object passed to require("env").args
+  --max-heap-size-mb <mb>   Override the V8 heap limit in MB (1-2048, default 256)
+  --timeout-ms <ms>      Client HTTP timeout for /api/v1/run (default: 600000; env: ALVA_RUN_TIMEOUT_MS)
+
+At least one of --code, --local-file, or --entry-path is required.
+These three options are mutually exclusive.
+
+Response fields:
+  result    JSON-encoded return value of the script
+  logs      Captured stderr output
+  status    "completed" or "failed"
+  error     Error message (when status is "failed")
+
+Available runtime modules:
+  require("alfs")            Cloud filesystem (absolute paths only)
+  require("env")             userId, username, args from request
+  require("net/http")        fetch(url, init) for HTTP requests
+  require("secret-manager")  Read user-scoped third-party secrets
+  require("@alva/feed")      Feed SDK for data pipelines
+  require("@alva/algorithm") 50+ technical indicators
+  require("@alva/adk")       Agent SDK for LLM tool calling
+  require("@arrays/...")     250+ financial data SDKs
+
+Constraints:
+  No top-level await — wrap in (async () => { ... })();
+  No Node.js builtins (fs, path, http) — use alfs, net/http instead
+  Default V8 heap limit is 256 MB; override with --max-heap-size-mb (1-2048)
+
+Examples:
+  alva run --code "1 + 2 + 3;"
+  alva run --code "JSON.stringify(require('env').args);" --args '{"symbol":"BTC"}'
+  alva run --entry-path "~/feeds/my-feed/v1/src/index.js"
+  alva run --entry-path "~/tasks/analyze/src/index.js" --args '{"symbol":"NVDA","limit":50}'
+  alva run --local-file ./my-script.js --args '{"symbol":"BTC"}'
+  alva run --entry-path "~/tasks/heavy/src/index.js" --max-heap-size-mb 1024
+  alva run --entry-path "~/feeds/slow/v1/src/index.js" --timeout-ms 900000
+
+════ alva deploy --help ════
+Usage: alva deploy <subcommand> [options]
+
+Manage scheduled cronjobs that run your scripts on a cron schedule.
+Min interval: 1 minute.
+
+Subcommands:
+  create     Create a new cronjob
+  list       List all cronjobs (supports cursor-based pagination)
+  get        Get a single cronjob by ID
+  update     Update a cronjob (partial update — only include changed fields)
+  delete     Delete a cronjob
+  pause      Pause a running cronjob
+  resume     Resume a paused cronjob
+  trigger    Fire the cronjob once, immediately, bypassing the schedule
+             (returns workflow_run_id; poll 'run-status' with a timeout)
+             This is not a dry run and may deliver Feed alerts to subscribers.
+  runs       List runs for a cronjob (cursor-paginated)
+  run-status Get one triggered run's pollable status by workflow_run_id
+  run-logs   Get stdout/stderr logs for a single cronjob run
+
+Create/Update flags:
+  --name <name>          Cronjob name (required on create, 1-63 lowercase alphanumeric/hyphens)
+  --path <path>          Path to script on ALFS (required on create, must exist)
+  --cron <expression>    Cron expression (required on create, e.g. "0 */4 * * *")
+  --args <json>          JSON object passed to require("env").args
+  --push-notify          Let successful Feed runs deliver declared alert outputs
+  --no-push-notify       Disable Feed alert delivery
+  --max-heap-size-mb <mb>  Override per-cronjob V8 heap limit (1-2046, default uses server config)
+  --execution-timeout-seconds <seconds>  Wall-clock timeout (1-3600; create default: 1800; update omitted: unchanged)
+  --run-as-service-account <id>  Run the cronjob under a service-account identity
+                         (id from "alva service-account create"); restricts file
+                         access to the SA's grants. Omit on update ⇒ unchanged (#602)
+  --clear-run-as         Clear run_as on update — run the cronjob as yourself
+                         again (mutually exclusive with --run-as-service-account)
+
+List flags:
+  --limit <n>            Max results per page (default: 20)
+  --cursor <cursor>      Pagination cursor from previous response
+
+Get/Update/Delete/Pause/Resume/Trigger flags:
+  --id <id>              Cronjob ID (required)
+
+Runs flags:
+  --id <id>              Cronjob ID (required)
+  --first <n>            Max results per page
+  --cursor <cursor>      Pagination cursor from previous response
+
+Run-status flags:
+  --id <id>              Cronjob ID (required)
+  --workflow-run-id <id> Workflow run ID returned by deploy trigger
+
+Run-logs flags:
+  --id <id>              Cronjob ID (required)
+  --run-id <id>          Run ID (required)
+
+Name format: 1-63 lowercase alphanumeric or hyphens, no leading/trailing hyphens.
+  Valid:   btc-ema-update, my-strategy-1
+  Invalid: BTC EMA, -my-job-, my_job
+
+Recommended cron schedules:
+  "0 */4 * * *"    Every 4 hours (stock OHLCV, crypto technicals)
+  "0 8 * * *"      Daily at 8am (fundamentals, insider trades, earnings)
+  "*/5 * * * *"    Every 5 minutes (high-frequency alerts)
+  "0 0 * * *"      Daily at midnight (end-of-day summaries)
+
+Examples:
+  alva deploy create --name btc-ema --path "~/feeds/btc-ema/v1/src/index.js" --cron "0 */4 * * *"
+  alva deploy create --name alert --path "~/feeds/alert/v1/src/index.js" --cron "*/5 * * * *" --push-notify --args '{"threshold":100}'
+  alva deploy list
+  alva deploy list --limit 10
+  alva deploy get --id 42
+  alva deploy update --id 42 --cron "0 */2 * * *" --no-push-notify
+  alva deploy pause --id 42
+  alva deploy resume --id 42
+  alva deploy delete --id 42
+  alva deploy runs --id 42
+  alva deploy runs --id 42 --first 10
+  alva deploy run-status --id 42 --workflow-run-id hatchet-run-id
+  alva deploy run-logs --id 42 --run-id 123
+
+Build-time verify (fire once, then poll up to 5 minutes):
+  WARNING: trigger uses production delivery semantics. If --push-notify and
+  subscriber alert bindings are enabled, this run may send real notifications.
+  WF=$(alva deploy trigger --id 42 | jq -r .workflow_run_id)
+  for _ in {1..60}; do
+    STATUS_JSON=$(alva deploy run-status --id 42 --workflow-run-id "$WF")
+    STATE=$(echo "$STATUS_JSON" | jq -r .state)
+    case "$STATE" in PENDING|DISPATCHED|RUNNING) ;; *) break ;; esac
+    sleep 5
+  done
+  case "$STATE" in
+    PENDING|DISPATCHED|RUNNING) echo "Timed out waiting for run completion" >&2; exit 1 ;;
+  esac
+  [ "$STATE" = COMPLETED ] || alva deploy run-logs --id 42 \
+                                  --run-id "$(echo "$STATUS_JSON" | jq -r .run.id)"
+
+════ alva schedule --help ════
+Usage: alva schedule <subcommand> [options]
+
+Manage named future and recurring work for an Alva Channel Agent.
+
+Subcommands:
+  list       List schedules
+  put        Create or replace a schedule by name
+  pause      Pause a schedule
+  resume     Resume a schedule
+  delete     Delete a schedule
+
+Common flags:
+  --channel-id <id>      Target Channel; omit for your Agent Channel
+  --name <name>          Stable schedule name
+
+Put flags:
+  --message <text>       Agent instruction delivered at each occurrence
+  Choose exactly one: --after <ISO duration>, --at <RFC3339>,
+                      --every <ISO duration>, or --cron <five fields>
+  --timezone <IANA>      Required with --cron
+  --starts-at <RFC3339>  Inclusive recurrence lower bound
+  --until <RFC3339>      Exclusive recurrence upper bound
+  --max-occurrences <n>  Positive recurrence count bound
+
+Examples:
+  alva schedule put --name review --message "Review status" --after PT30M
+  alva schedule put --name market-open --message "Review the open" --cron "30 9 * * 1-5" --timezone America/New_York
+  alva schedule list
+  alva schedule pause --name market-open
+
+════ alva service-account --help ════
+Usage: alva service-account <subcommand> [options]
+
+Manage restricted run-as identities. A service account executes a UDF or
+cronjob with only the ALFS paths you grant it; billing/audit stay with you.
+Set the resulting id as --run-as-service-account on a UDF/cronjob. Opt-in:
+no run-as = run as owner. See the service-accounts skill reference.
+
+Subcommands:
+  create     Create a service account (--name <label>)
+  list       List the service accounts you own
+  delete     Delete a service account (--id <id>); referencing jobs fail-close
+  grant      Grant an ALFS path (--id <id> --path <path> --permission read|write|import)
+  revoke     Revoke an ALFS path (--id <id> --path <path> --permission ...)
+
+Examples:
+  alva service-account create --name fintwit-bot
+  alva service-account grant --id 90123 --path '~/feeds/x/v1/src/index.js' --permission read
+  alva service-account grant --id 90123 --path '~/feeds/x/v1/' --permission read
+  alva deploy create --name x-update --path '~/feeds/x/v1/src/index.js' \
+    --cron "0 */4 * * *" --run-as-service-account 90123
+  alva service-account revoke --id 90123 --path '~/feeds/x/v1/' --permission read
+  alva service-account delete --id 90123
+
+════ alva release --help ════
+Usage: alva release <subcommand> [options]
+
+Publish feeds and playbooks to the Alva platform. The typical workflow:
+  1. Deploy cronjob (alva deploy create)
+  2. Register feed (alva release feed)
+  3. Create playbook draft (alva release playbook-draft)
+  4. Write HTML to ALFS (alva fs write --path ~/playbooks/{name}/index.html)
+  5. Write README to ALFS (alva fs write --path ~/playbooks/{name}/README.md)
+  6. Release playbook (alva release playbook --readme-url "/alva/home/<username>/playbooks/{name}/README.md")
+
+Subcommands:
+  feed              Register a feed after deploying its cronjob
+  playbook-draft    Create a playbook draft (preview before publishing)
+  playbook          Publish a playbook (public for free users, choice for pro)
+
+Feed flags:
+  --name <name>          Feed name, unique per user (required)
+  --version <version>    Semantic version, e.g. "1.0.0" (required)
+  --cronjob-id <id>      ID of the backing cronjob (required)
+  --view-json <json>     View configuration JSON
+  --description <text>   Feed description
+  --changelog <text>     Per-major changelog summary
+  --agent-type <type>    Agent kind that produces this feed, e.g. "alpi".
+                         Marks the feed as an agent feed with an editable
+                         prompt (AGENTS.md). Omit for a regular feed.
+  --skip-auto-trigger    Suppress the default first producer run. Releasing
+                         still creates the owner's alert binding.
+
+Feed release behavior:
+  A new feed creates an ACTIVE owner alert binding, then triggers its first
+  producer run unless --skip-auto-trigger is present. Use the flag when you
+  will route the binding or trigger the producer explicitly afterward.
+
+Playbook-draft flags:
+  --name <name>              URL-safe playbook name, unique per user (required)
+  --display-name <name>      Human-readable title, max 40 chars (required)
+  --feeds <json>             JSON array of {feed_id, feed_major?} (required)
+  --description <text>       Playbook description
+  --trading-symbols <json>   JSON array of tickers, e.g. '["BTC","ETH"]' (max 50)
+  --skill-id <id>            Source-skill reference "username/name", e.g.
+                             "alva/screener". Discover skills via
+                             "alva skillhub list". Persisted set-once on first draft.
+  --tags <json>              JSON array of discovery tags, e.g. '["btc","macro"]'
+                             (max 10, each up to 32 chars). First draft merges
+                             with skill tags; re-draft replaces the tag set.
+
+Playbook flags:
+  --name <name>          Playbook name, must already exist as draft (required)
+  --version <version>    Semantic version, e.g. "v1.0.0" (required)
+  --feeds <json>         JSON array of {feed_id, feed_major?} (required)
+  --changelog <text>     Release changelog (required)
+  --readme-url <url>     Owner-attested README location (required). Must be
+                         the absolute ALFS path
+                         "/alva/home/<username>/playbooks/<name>/README.md".
+                         The README must already be written to ALFS at that
+                         path before publish.
+  --bypass-lint          Bypass the design-lint gate. Errors are still
+                         printed on stderr — use for emergency hotfixes or
+                         legacy playbook re-releases.
+
+Display name conventions:
+  Format: [subject/theme] [analysis angle/strategy logic]
+  Max 40 characters. Avoid "My", "Test", or generic-only titles.
+  Good: "BTC Trend Dashboard", "NVDA Insider Activity Tracker"
+  Bad:  "My Dashboard", "Test V2", "Stock Dashboard"
+
+Examples:
+  alva release feed --name btc-ema --version 1.0.0 --cronjob-id 42
+  alva release feed --name nvda-insiders --version 1.0.0 --cronjob-id 43 --description "NVDA insider trading activity"
+  alva release feed --name market-pulse --version 1.0.0 --cronjob-id 44 --agent-type alpi
+  alva release playbook-draft --name btc-dashboard --display-name "BTC Trend Dashboard" --feeds '[{"feed_id":100}]' --trading-symbols '["BTC"]'
+  alva release playbook-draft --name btc-dashboard --display-name "BTC Trend Dashboard" --feeds '[{"feed_id":100}]' --skill-id alva/screener
+  alva release playbook-draft --name btc-dashboard --display-name "BTC Trend Dashboard" --feeds '[{"feed_id":100}]' --tags '["btc","macro"]'
+  alva release playbook --name btc-dashboard --version v1.0.0 --feeds '[{"feed_id":100}]' --changelog "Initial release" --readme-url "/alva/home/<username>/playbooks/btc-dashboard/README.md"
+
+════ alva lint --help ════
+Usage: alva lint <subcommand> [options]
+
+Run the design-system linter against a playbook artifact. The active design
+contract is fetched from the CDN (with a bundled fallback) so the linter
+always runs the same rule set the platform enforces at release time.
+
+Subcommands:
+  playbook <file>    Lint a local HTML file
+
+Playbook flags:
+  --format <fmt>     Output format: "human" (default) or "json"
+
+Exit status:
+  0   No errors (warnings/info may still be present)
+  1   One or more error-severity findings
+
+Examples:
+  alva lint playbook ./dist/index.html
+  alva lint playbook ./dist/index.html --format json
+
+════ alva automation --help ════
+Usage: alva automation <subcommand> [options]
+
+Manage automations. This is the product-facing surface for what older CLI
+commands called "feeds"; ids are currently the same underlying feed ids.
+
+Subcommands:
+  list      List automations owned by the caller
+  inspect   Inspect one automation and show its flow config path when available
+  publish   First-publish/register a new automation after deploying its cronjob
+  update    Partially update an existing automation by numeric id
+  delivery  Get or partially update per-automation alert destinations
+  stop      Stop an automation's producer cronjob
+  resume    Resume a stopped automation's producer cronjob
+  delete    Soft-delete an automation
+
+List flags:
+  --limit <n>      Max results per page (default 50, max 100 server-side)
+  --cursor <token> Pagination cursor from previous response
+  --status <s>     active | paused | all (default: active)
+  --json           Print raw JSON instead of a human-readable summary
+
+Publish flags:
+  --name <name>          Automation name, unique per user (required)
+  --version <version>    Semantic version, e.g. "1.0.0" (required)
+  --cronjob-id <id>      ID of the backing cronjob (required)
+  --view-json <json>     View configuration JSON
+  --description <text>   Automation description
+  --changelog <text>     Per-major changelog summary
+  --agent-type <type>    Agent kind that produces this automation, e.g. "alpi"
+  --skip-auto-trigger    Suppress the default first producer run. Publishing
+                         still creates the owner's alert binding.
+
+Publish behavior:
+  A new automation creates an ACTIVE owner alert binding, then triggers its
+  first producer run unless --skip-auto-trigger is present. Use the flag when
+  you will route the binding or trigger the producer explicitly afterward.
+
+Update flags:
+  --id <automation_id>   Existing automation id (required)
+  --version <version>    New semantic version; omitted preserves the current one
+  --cronjob-id <id>      Replacement producer; omitted preserves the current one
+  --description <text>   Replace description; explicit empty string clears it
+  --changelog <text>     Replace per-major changelog; explicit empty clears it
+  --agent-type <type>    Replace agent kind; explicit empty clears it
+  --trigger              Trigger one run after the update commits
+
+Delivery subcommands:
+  delivery get       Read Alva channel and verified-email destinations
+  delivery update    Update only the destination fields explicitly provided
+
+Delivery flags:
+  --id <automation_id>       Existing automation id (required)
+  --alva-channel-ids <a,b>   Replace Alva destinations; empty clears them
+  --email-enabled            Enable verified-account email delivery
+  --no-email-enabled         Disable email delivery
+
+Lifecycle flags:
+  --id <automation_id>   Numeric automation id (required for inspect/update/stop/resume/delete)
+
+Examples:
+  alva automation list
+  alva automation list --status all --limit 20
+  alva automation inspect --id 42
+  alva automation publish --name btc-ema --version 1.0.0 --cronjob-id 42
+  alva automation update --id 42 --description "Updated BTC EMA"
+  alva automation update --id 42 --version 2.0.0 --trigger
+  alva automation delivery get --id 42
+  alva automation delivery update --id 42 --email-enabled
+  alva automation delivery update --id 42 --no-email-enabled
+  alva automation delivery update --id 42 --alva-channel-ids 0,123
+  alva automation stop --id 42
+  alva automation resume --id 42
+  alva automation delete --id 42
+
+════ alva alert --help ════
+Usage: alva alert <subcommand> [options]
+
+Manage alerts. Alert subscriptions target automations (feeds) only. Playbook
+follows are independent; delivery history and global preferences live here too.
+Personal alerts may be routed to different Alva channels. External IM
+group alerts are managed explicitly through "alert group" and target the current
+group.
+
+Subcommands:
+  list          List the caller's active alerts
+  follows       List the playbooks the caller follows
+  enable        Enable alerts by automation name or ids
+  disable       Disable alerts by automation name or ids
+  group         Manage alerts delivered to the current external group
+  history       List alert delivery history for an automation
+  preferences   List global alert preferences
+  enable-session-completed
+  disable-session-completed
+
+Target flags (choose one):
+  --automation <owner/name>  Automation target
+  --automation-ids <a,b>     Comma-separated automation target ids
+
+Enable routing:
+  --channel-id <id>          Alva channel ID for name or id targets (optional)
+
+Group subcommands:
+  alva alert group list
+  alva alert group enable --automation-ids <id>
+  alva alert group disable --automation-ids <id>
+
+Group commands must run inside the attached external IM-group sandbox. The
+current group is inferred automatically; there is no session-id argument.
+
+List flags:
+  --first <n>      Optional page size
+  --cursor <token> Optional cursor from previous response
+  --json           Print raw JSON instead of a human-readable summary
+
+Follows flags:
+  --limit <n>      Optional page size
+  --cursor <token> Optional cursor from previous response
+
+History flags:
+  --delivery-provider <name>  Optional provider filter (telegram, web, ...)
+  --status <status>  Optional status filter (sent, failed, filtered)
+  --since <seconds>  Optional Unix seconds lower bound
+
+Examples:
+  alva alert list
+  alva alert follows --limit 20
+  alva alert enable --automation alice/btc-ema
+  alva alert disable --automation alice/btc-ema
+  alva alert enable --automation-ids 13292,13293
+  alva alert disable --automation-ids 13292
+  alva alert group enable --automation-ids 13292
+  alva alert history --automation alice/btc-ema --status sent
+  alva alert preferences
+
+════ alva feed --help ════
+Usage: alva feed <subcommand> [options]
+
+Legacy alias for automation lifecycle management. Prefer "alva automation".
+
+Subcommands:
+  list        List feeds owned by the caller
+  stop        Stop a feed's producer cronjob
+  resume      Resume a stopped feed's producer cronjob
+  delete      Soft-delete a feed and all its active majors
+  set-visibility  Publish or unpublish a feed (--visibility public|private)
+
+Flags:
+  --id <feed_id>       Numeric feed id (required for stop/resume/delete/set-visibility)
+  --visibility <level> public | private (required for set-visibility)
+
+List flags:
+  --limit <n>      Max results per page (default 50, max 100 server-side)
+  --cursor <token> Pagination cursor from previous response
+  --status <s>     active | paused | all (default: active)
+
+Notes:
+  - list returns the raw JSON envelope. Prefer "alva automation list" for
+    human-readable output or "alva automation list --json" for explicit JSON.
+  - stop/resume affect future scheduled runs; existing feed data remains.
+  - delete cascades to all active feed_majors in the same DB transaction.
+  - delete removes producer cronjobs best-effort; the cronjob scavenger
+    reconciles any leftover rows on its next sweep.
+  - set-visibility publishes (public) or unpublishes (private) a feed; the
+    backend sets feeds.is_public and projects the ALFS public read grant
+    together. Prefer this over "alva fs grant" on the feed path, which causes
+    drift.
+  - Auth: caller must own the feed (uid match), enforced by the backend.
+
+Examples:
+  alva feed list
+  alva feed list --status all --limit 20
+  alva feed stop --id 42
+  alva feed resume --id 42
+  alva feed delete --id 42
+  alva feed set-visibility --id 42 --visibility public
+  alva feed set-visibility --id 42 --visibility private
+
+════ alva playbooks --help ════
+Usage: alva playbooks <subcommand> [options]
+
+Find and resolve playbooks with an agent-friendly response shape.
+
+Subcommands:
+  trending        List trending playbooks
+  get             Resolve playbooks by id(s) or "owner/name" ref
+  list            List a user's public (released) playbooks by owner username
+  mine            List YOUR OWN playbooks incl. drafts (requires auth)
+  set-visibility  Set a playbook's visibility (requires auth)
+
+Get flags:
+  --id <n>               Single numeric playbook id
+  --ids <a,b>            Comma-separated ids (max 100); ids you cannot see
+                         — and DELETED playbooks — return no row
+  --ref <owner/name>     Resolve by handle
+
+List flags:
+  --owner <username>     Owner username (required)
+  --limit <n>            Max results per page (default one page of ~50)
+  --cursor <cursor>      Pagination cursor from previous response
+  --all                  Fetch every page (auto-paginate); without it a
+                         single page is returned — check has_next
+
+Mine flags (your own playbooks, drafts included):
+  --filter <f>           draft | running | paused (optional; omit for all)
+  --limit <n>            Max results per page (default one page of ~50)
+  --cursor <cursor>      Pagination cursor from previous response
+  --all                  Fetch every page (auto-paginate)
+
+Trending flags:
+  --keyword <text>       Search text
+  --tags <a,b>           Comma-separated tags
+  --tag <tag>            Single tag convenience alias
+  --sort <sort>          FOLLOWS or RECENT (case-insensitive)
+  --limit <n>            Max results per page
+  --cursor <cursor>      Pagination cursor from previous response
+  --current <cursor>     Backward-compatible cursor alias
+
+Set-visibility flags:
+  --name <name>          Playbook name (required; owner derived from auth)
+  --visibility <v>       public, private, or paid (required, case-insensitive)
+
+Output:
+  trending / get / list print a readable summary (title, ref, clickable
+  URL, description, tags) by default. Pass --json for the raw envelope
+  (for scripting / jq).
+  --json                 Emit raw JSON instead of the readable rendering
+
+JSON response fields:
+  playbooks[].ref          "username/name" identifier for agents
+  playbooks[].url_path     Relative web path: /u/username/playbooks/name
+  playbooks[].url          Absolute web URL: https://alva.ai/u/username/playbooks/name
+  playbooks[].description  Short summary
+  playbooks[].tags         Discovery tags
+  playbooks[].follow_count Social proof signal
+  playbooks[].cursor       Cursor for pagination
+  has_next                 Whether another page exists
+  playbook_path            "<owner>/<name>" echoed by set-visibility
+
+Notes:
+  private and paid are paid-tier features; free-tier accounts get a
+  PERMISSION_DENIED error from the gateway.
+
+Examples:
+  alva playbooks trending --keyword scanner --tags macro,ai --sort recent --limit 5
+  alva playbooks get --ids 8009,8010
+  alva playbooks get --ref alice/btc-dashboard
+  alva playbooks list --owner alice --all
+  alva playbooks mine --filter draft
+  alva playbooks set-visibility --name my-scanner --visibility private
+  alva playbooks set-visibility --name my-scanner --visibility public
+
+════ alva functions --help ════
+Usage: alva functions <subcommand> [options]
+
+Register and manage playbook UDF functions. These are creator-owned functions
+that released playbook HTML invokes through window.alva.udf.
+
+Subcommands:
+  register    Register or update a function on a playbook
+  list        List registered functions for a playbook
+  delete      Delete a registered function
+  invoke      Invoke a registered function with creator/session auth
+  allowance   Manage your viewer credit allowance for a playbook
+
+Register flags:
+  --playbook-id <id>          Numeric playbook id (required)
+  --function-name <name>      Function name exposed to window.alva.udf (required)
+  --entry-script-path <path>  Absolute ALFS path to a .js entry script (required)
+  --params-schema <json>      JSON Schema object/string for parameters_json
+  --params-schema-file <path> Read JSON Schema from a local file
+  --allow-charges             Allow this function to charge viewer allowance
+  --no-allow-charges          Explicitly register as no-charge
+  --run-as-service-account <id>  Run invocations under a service-account identity
+                              (id from "alva service-account create"); scopes file
+                              access to the SA's grants. Omit on re-register ⇒
+                              unchanged (#602)
+  --clear-run-as              Clear run_as on re-register — run as the owner again
+                              (mutually exclusive with --run-as-service-account)
+
+List flags:
+  --playbook-id <id>          Numeric playbook id (required)
+
+Delete flags:
+  --playbook-id <id>          Numeric playbook id (required)
+  --function-name <name>      Function name to delete (required)
+
+Invoke flags:
+  --playbook-id <id>          Numeric playbook id (required)
+  --function-name <name>      Function name to invoke (required)
+  --params <json>             Parameters object passed as parameters_json
+
+Allowance subcommands:
+  allowance get      Get your allowance for a playbook
+  allowance list     List your allowances
+  allowance create   Create or update your allowance for a playbook
+  allowance revoke   Revoke your allowance for a playbook
+
+Allowance flags:
+  --playbook-id <id>          Numeric playbook id (required for get/create/revoke)
+  --amount <credits>          Positive integer allowance amount (required for create)
+
+Notes:
+  entry_script_path must be an absolute ALFS path under your home, such as
+  /alva/home/alice/playbooks/my-playbook/udf/analyze.js. Use alva whoami to
+  discover home_path. Use the browser runtime window.alva.udf for released
+  playbook UI; this CLI is mainly for creator-side setup and smoke tests.
+  Allowance commands use the gateway GraphQL session-user surface and reject
+  playbook-scoped viewer tokens.
+
+Examples:
+  alva functions register --playbook-id 123 --function-name analyze --entry-script-path /alva/home/alice/playbooks/my-playbook/udf/analyze.js --params-schema-file ./schema.json --no-allow-charges
+  alva functions list --playbook-id 123
+  alva functions delete --playbook-id 123 --function-name analyze
+  alva functions invoke --playbook-id 123 --function-name analyze --params '{"ticker":"AAPL"}'
+  alva functions allowance create --playbook-id 123 --amount 25
+  alva functions allowance get --playbook-id 123
+  alva functions allowance list
+  alva functions allowance revoke --playbook-id 123
+
+════ alva credits --help ════
+Usage: alva credits <subcommand> [options]
+
+Read the authenticated user's own credit wallet and consumption history.
+
+Subcommands:
+  wallet      Show current wallet balance, total remaining, and UTC today usage
+  items       List raw credit consumption records in a time window
+
+Items window flags (choose exactly one):
+  --today                   UTC day containing the current time
+  --last <duration>         Recent window, e.g. 7d, 24h, 30m
+  --start <time> --end <time>  Explicit UTC window; accepts ISO, YYYY-MM-DD, or Unix ms
+
+Items optional flags:
+  --session-id <id>         Filter to one chat/session
+  --first <n>               Page size (1-500)
+  --after <cursor>          Opaque cursor from pageInfo.endCursor
+
+Notes:
+  - Results are viewer-scoped by the backend; there is no --user-id override.
+  - --start is inclusive and --end is exclusive.
+
+Examples:
+  alva credits wallet
+  alva credits items --today --first 20
+  alva credits items --last 7d --session-id 2069373335591239680
+  alva credits items --start 2026-06-23 --end 2026-06-24
+
+════ alva secrets --help ════
+Usage: alva secrets <subcommand> [options]
+
+Manage encrypted secrets for use in Alva scripts. Secrets are stored
+encrypted at rest and accessible via require("secret-manager") in the runtime.
+
+For sensitive secrets (API keys, tokens), prefer the web UI at https://alva.ai/apikey.
+Use the CLI for agent-managed CRUD operations.
+
+Subcommands:
+  create     Create a new secret (fails if name already exists)
+  list       List all secrets (metadata only: name, keyPrefix, timestamps)
+  get        Get a secret's plaintext value
+  update     Update a secret's value (fails if name doesn't exist)
+  delete     Delete a secret (fails if name doesn't exist)
+
+Flags:
+  --name <name>      Secret name (required for create, get, update, delete)
+  --value <value>    Secret value (required for create, update)
+
+Runtime usage in scripts:
+  const secret = require("secret-manager");
+  const key = secret.loadPlaintext("OPENAI_API_KEY");
+  // Returns string if found, null if missing
+
+Examples:
+  alva secrets create --name OPENAI_KEY --value sk-abc123
+  alva secrets list
+  alva secrets get --name OPENAI_KEY
+  alva secrets update --name OPENAI_KEY --value sk-new456
+  alva secrets delete --name OPENAI_KEY
+
+════ alva sdk --help ════
+Usage: alva sdk <subcommand> [options]
+
+Browse Alva's 250+ financial data SDKs. Use the two-step discovery flow:
+  1. List partitions to find the right category
+  2. Get partition summary to see available modules
+  3. Get full documentation for a specific module
+
+Subcommands:
+  doc                 Get documentation for a specific SDK module
+  partitions          List all available data partitions
+  partition-summary   Get a summary of modules in a partition
+
+Flags:
+  --name <module>        Module name for 'doc' (required)
+  --partition <name>     Partition name for 'partition-summary' (required)
+
+Key partitions:
+  feed_widgets                             Per-handle/channel rolling subscriptions
+  unified_search                           Web search and URL scraping tools (X/Grok, Google, Brave, serper, decodo)
+  technical_indicator_calculation_helpers  50+ pure calculators (RSI, MACD, Bollinger)
+
+Examples:
+  alva sdk partitions
+  alva sdk partition-summary --partition feed_widgets
+  alva sdk doc --name "@arrays/data/widget-scrap/news:v1.0.0"
+  alva sdk doc --name "@arrays/data/search/search-grok-x:v1.0.0"
+
+════ alva skillhub --help ════
+Usage: alva skillhub <subcommand> [options]
+
+Browse playbook skills (system templates + user-created) from the
+alva-gateway public API. Skills are namespaced as "<username>/<name>".
+The "get" subcommand returns metadata + file listing; use "file" to
+fetch individual file contents (progressive loading).
+
+Subcommands:
+  list       List skill summaries (filter by --tag and/or --username)
+  tags       Distinct tag set used across skills
+  get        Get one skill's metadata + file listing (path + size_bytes only)
+  file       Get one file's content from a skill
+
+Flags:
+  --tag <tag>           (list) filter by tag
+  --username <user>     (list) filter by owner username
+  --json                Return raw envelope instead of pretty output
+
+Examples:
+  alva skillhub list
+  alva skillhub list --tag research
+  alva skillhub list --username alva
+  alva skillhub tags
+  alva skillhub get alva/ai-digest
+  alva skillhub file alva/ai-digest README.md
+  alva skillhub file alva/ai-digest references/api/example.md > out.md
+
+════ alva data-skills --help ════
+Usage: alva data-skills <subcommand> [args]
+
+Browse the Arrays backend's data-skill documentation. These endpoints are
+public — no Alva credentials required.
+
+Subcommands:
+  list                            List all available data skills
+  summary <skill>                 Get the endpoints table for a skill
+  endpoint <skill> <file>         Get full documentation for a specific endpoint
+
+Flags:
+  --json             Emit raw JSON instead of the readable rendering (for scripting / jq)
+
+Output: by default, summary/endpoint print the skill's markdown content directly,
+and list prints a name → description summary. Pass --json to get the raw JSON
+shape (same as before this CLI version) for piping into jq or other tools.
+
+Global override:
+  --arrays-endpoint <url>   Arrays backend URL (or ARRAYS_ENDPOINT env)
+                            Default: https://data-tools.prd.space.id
+
+Examples:
+  alva data-skills list
+  alva data-skills list --json
+  alva data-skills summary <skill>
+  alva data-skills endpoint <skill> <endpoint-file>
+  alva data-skills summary <skill> --json | jq '.content'
+
+════ alva comments --help ════
+Usage: alva comments <subcommand> [options]
+
+Manage comments on Alva playbooks. Supports top-level comments and threaded
+replies. One comment per playbook can be pinned (pinning a new one unpins
+the previous).
+
+Subcommands:
+  create     Post a comment on a playbook (or reply to an existing comment)
+  pin        Pin a top-level comment (owner/admin only)
+  unpin      Unpin a comment (owner/admin only)
+
+Create flags:
+  --username <user>      Playbook owner's username (required)
+  --name <name>          Playbook name (required)
+  --content <text>       Comment content (required)
+  --parent-id <id>       Parent comment ID (for threaded replies, omit for top-level)
+
+Pin/Unpin flags:
+  --comment-id <id>      Comment ID (required)
+
+Examples:
+  alva comments create --username alice --name btc-dashboard --content "Great analysis!"
+  alva comments create --username alice --name btc-dashboard --content "Thanks!" --parent-id 5
+  alva comments pin --comment-id 12
+  alva comments unpin --comment-id 12
+
+════ alva notification-history --help ════
+Usage: alva notification-history <subcommand> [options]
+
+Read the caller's delivered notification history scoped to a feed.
+This is an audit/history surface, not a subscription toggle.
+
+Subcommands:
+  list-feed          List notification history for a feed
+
+Common flags:
+  --username <user>  Owner's username (required)
+  --name <name>      URL-safe feed name (required)
+  --delivery-provider <name>  Optional provider filter (telegram, web, ...)
+  --status <status>  Optional status filter (sent, failed, filtered)
+  --since <seconds>  Optional Unix seconds lower bound
+  --first <n>        Optional page size (default 50, max 200 server-side)
+  --cursor <token>   Optional cursor from the previous page
+
+Examples:
+  alva notification-history list-feed --username alice --name btc-ema --status sent
+
+════ alva notification-preferences --help ════
+Usage: alva notification-preferences <subcommand>
+
+Manage personal notification preferences. Session completed notifications are
+enabled by default unless explicitly disabled.
+
+Subcommands:
+  list                         List notification preferences
+  enable-session-completed     Turn on session completed notifications
+  disable-session-completed    Turn off session completed notifications
+
+Examples:
+  alva notification-preferences list
+  alva notification-preferences disable-session-completed
+  alva notification-preferences enable-session-completed
+
+════ alva feedback --help ════
+Usage: alva feedback submit [options]
+
+Submit user-confirmed Alva platform feedback. Agents should only call this
+after the user explicitly agrees to send feedback to Alva.
+
+Subcommands:
+  submit      Send one feedback report to Alva
+
+Submit flags:
+  --summary <text>        Short issue summary (required)
+  --details <text>        Additional context
+  --category <category>   api_error, data_quality, docs, runtime, auth, billing, other
+  --severity <severity>   low, medium, high, critical
+  --source <source>       agent_detected, user_reported, system_detected
+  --evidence-json <json>  Optional structured diagnostics for agents
+  --context-json <json>   Optional structured session metadata for agents
+
+Examples:
+  alva feedback submit --summary "runtime failed" --category runtime --severity high
+  alva feedback submit --summary "bad quote data" --category data_quality
+
+════ alva subscriptions --help ════
+Usage: alva subscriptions <subcommand> [options]
+
+Three DISTINCT concepts share the word "subscribe" in the product:
+  - FOLLOW   — the social relation (the UI's "Subscribed Playbooks").
+               Enumerate with: alva subscriptions follows
+  - ALERTS   — push/notification opt-ins (what list returns).
+  - PURCHASE — paid playbook access / the SaaS plan. NOT this command.
+
+Operations:
+  - follow-playbook / unfollow-playbook change only the social follow.
+  - subscribe-feed / unsubscribe-feed toggle one feed's alert.
+  - subscribe / unsubscribe toggle alerts for FEED ids in a batch. They never
+    follow or unfollow a playbook.
+
+Subcommands:
+  follow-playbook        Follow a playbook without changing alerts
+  unfollow-playbook      Unfollow a playbook without changing alerts
+  subscribe-feed         Enable alerts for a single feed
+  unsubscribe-feed       Disable alerts for a single feed
+  subscribe              Bulk enable alerts by feed id
+  unsubscribe            Bulk disable alerts by feed id
+  list                   List the caller's active alert subscriptions
+  follows                List the playbooks the caller follows
+
+Name-addressed flags:
+  --username <user>      Owner's username (required)
+  --name <name>          URL-safe playbook or feed name (required)
+
+Batch flags:
+  --feed-ids <a,b>       Comma-separated feed target ids
+  --channel-id <id>      Alva channel ID for subscribe (optional)
+
+List flags:
+  --first <n>            Optional page size (response carries total_count —
+                         when items < total_count, keep paginating)
+  --cursor <token>       Optional cursor from the previous page
+
+Follows flags:
+  --limit <n>            Optional page size
+  --cursor <token>       Optional cursor from the previous page
+
+List response notes:
+  items[].kind           FEED_ALERT
+  items[].target_status  ACTIVE | TARGET_DELETED | PAUSED
+
+Examples:
+  alva subscriptions follow-playbook    --username alice --name btc-dashboard
+  alva subscriptions subscribe-feed     --username alice --name btc-ema-cross
+  alva subscriptions subscribe   --feed-ids 13292,13293
+  alva subscriptions unsubscribe --feed-ids 13292,13293
+  alva subscriptions list --first 200
+  alva subscriptions follows
+
+════ alva remix --help ════
+Usage: alva remix --child-username <u> --child-name <n> --parents <json>
+
+Record remix lineage when creating a playbook based on existing playbooks.
+Call this after releasing a remixed playbook to establish the parent-child
+relationship in the database.
+
+Required:
+  --child-username <username>   Your username (the remixer)
+  --child-name <name>           Your new playbook name
+  --parents <json>              JSON array of source playbooks: [{"username":"...", "name":"..."}]
+
+Examples:
+  alva remix --child-username bob --child-name my-btc --parents '[{"username":"alice","name":"btc-signals"}]'
+
+════ alva portfolio --help ════
+Usage: alva portfolio <subcommand> [options]
+
+Read-only view of connected accounts across TREX and SnapTrade.
+For trading actions (subscribe, execute, etc.) use 'alva trading'.
+
+Subcommands:
+  accounts     List all connected accounts (TREX + SnapTrade)
+  summary      Get portfolio summary (holdings + balance) for an account
+  activities   List recent activity for an account
+
+Summary/Activities flags:
+  --account-id <id>    Account ID with provider prefix, e.g. trex:123 or snaptrade:456 (required)
+
+Activities optional flags:
+  --limit <n>          Max results (default 50, max 200)
+  --page-token <tok>   Pagination token from a previous response
+
+Examples:
+  alva portfolio accounts
+  alva portfolio summary --account-id trex:123
+  alva portfolio activities --account-id snaptrade:456 --limit 20
+
+════ alva markets --help ════
+Usage: alva markets <subcommand> [options]
+
+Read the Markets backend's canonical company context. The Toolkit resolves
+earnings events through the backend period catalog; it does not construct ALFS
+owners, feed slugs, versions, or paths.
+
+Subcommands:
+  narrative    Get the current narrative, history, and narrative change log
+  earnings     Get Pre, Release, Transcript, and Post for one fiscal event
+
+Narrative flags:
+  --ticker <symbol>             Stock ticker (required)
+
+Earnings flags:
+  --ticker <symbol>             Stock ticker (required)
+  --event <selector>            latest-completed (default) or next-confirmed
+  --fiscal-year <year>          Explicit fiscal year; requires --fiscal-quarter
+  --fiscal-quarter <Q1..Q4>     Explicit fiscal quarter; requires --fiscal-year
+
+Do not combine --event with --fiscal-year/--fiscal-quarter. These commands read
+the current backend view; historical query-as-of gating is not supported yet.
+
+Output semantics:
+  Narrative is dated Alva analysis. Use current for present-tense company
+  context and history only to explain changes; use separate sources for live
+  prices and official facts.
+
+  Earnings covers one fiscal event. Pre is the dated expectation baseline;
+  Release identifies the official source for reported facts; Transcript holds
+  management statements; Post is Alva's dated interpretation.
+
+  Each Earnings stage has its own status. A missing or unavailable stage does
+  not invalidate valid stages, and an unavailable requested event is never
+  replaced with a different quarter.
+
+Examples:
+  alva markets narrative --ticker AAPL
+  alva markets earnings --ticker AAPL
+  alva markets earnings --ticker AAPL --event next-confirmed
+  alva markets earnings --ticker AAPL --fiscal-year 2026 --fiscal-quarter Q3
+
+════ alva trading --help ════
+Usage: alva trading <subcommand> [options]
+
+Manage trading accounts, portfolios, orders, subscriptions, and risk rules.
+
+Subcommands:
+  accounts             List all trading accounts
+  portfolio            Get portfolio for an account
+  orders               List orders for an account
+  subscriptions        List subscriptions for an account
+  equity-history       Get equity history for an account
+  risk-rules           Show risk rules
+  subscribe            Subscribe an account to a source feed
+  unsubscribe          Unsubscribe by subscription ID
+  execute              Execute a signal on an account
+  update-risk-rules    Update risk rules
+
+Portfolio/Orders/Subscriptions/Equity-history flags:
+  --account-id <id>    Trading account ID (required)
+
+Orders optional flags:
+  --limit <n>          Max results
+  --source <source>    Filter by source
+  --since <timestamp>  Filter orders since timestamp
+
+Equity-history optional flags:
+  --timeframe <tf>     Timeframe (e.g. "1d", "1h")
+  --since-ms <ms>      Start timestamp in ms
+  --until-ms <ms>      End timestamp in ms
+
+Subscribe flags:
+  --account-id <id>            Account ID (required)
+  --source-username <user>     Source username (required)
+  --source-feed <feed>         Source feed (required)
+  --playbook-id <id>           Playbook ID (required)
+  --playbook-version <ver>     Playbook version (required)
+  --execute-latest             Execute latest signal on subscribe
+
+Unsubscribe flags:
+  --subscription-id <id>       Subscription ID (required)
+
+Execute flags:
+  --account-id <id>            Account ID (required)
+  --signal <json>              Signal JSON (required)
+  --dry-run                    Dry run mode
+  --source-username <user>     Source username (optional)
+  --source-feed <feed>         Source feed (optional)
+
+Update-risk-rules flags:
+  --max-single-order-value <n>       Max single order value (required)
+  --max-single-order-enabled <bool>  Max single order enabled (required)
+  --max-daily-turnover-value <n>     Max daily turnover value (required)
+  --max-daily-turnover-enabled <bool> Max daily turnover enabled (required)
+  --max-daily-orders-value <n>       Max daily orders value (required)
+  --max-daily-orders-enabled <bool>  Max daily orders enabled (required)
+
+Examples:
+  alva trading accounts
+  alva trading portfolio --account-id acc_123
+  alva trading orders --account-id acc_123 --limit 10
+  alva trading subscriptions --account-id acc_123
+  alva trading equity-history --account-id acc_123 --timeframe 1d
+  alva trading risk-rules
+  alva trading subscribe --account-id acc_123 --source-username alice --source-feed btc-signals --playbook-id pb_1 --playbook-version v1.0.0
+  alva trading unsubscribe --subscription-id sub_456
+  alva trading execute --account-id acc_123 --signal '{"symbol":"BTC","side":"buy","qty":0.1}' --dry-run
+  alva trading update-risk-rules --max-single-order-value 10000 --max-single-order-enabled true --max-daily-turnover-value 50000 --max-daily-turnover-enabled true --max-daily-orders-value 100 --max-daily-orders-enabled true
+
+════ alva broker --help ════
+{"commands":[{"flags":["account","venue","query"],"name":"instrument search"},{"flags":["account","venue","intent-id","contract-id-ex","symbol","side","quantity","order-type","limit-price","time-in-force"],"name":"instruction create"},{"flags":["account","venue","intent-id"],"name":"instruction get"},{"flags":["account","venue","limit"],"name":"instruction list"},{"flags":["account","venue","intent-id"],"name":"instruction delete"},{"flags":["account","venue","intent-id"],"name":"instruction refresh"},{"flags":["account","venue","symbol","side","type","amount","price","param","asset-class","instrument-id","intent-id","client-order-id","dry-run","stdin"],"name":"order place"},{"flags":["account","venue","id","client-order-id","symbol","asset-class"],"name":"order cancel"},{"flags":["account","venue","id","client-order-id","intent-id","symbol","asset-class"],"name":"order get"},{"flags":["account","venue","symbol","open","asset-class"],"name":"order list"},{"flags":["account","venue"],"name":"balance"},{"flags":["account","venue"],"name":"positions"},{"flags":["venue","symbol","market-data-id","venue-code","account"],"name":"quote"},{"flags":["venue","symbol","timeframe","limit","market-data-id","venue-code","account"],"name":"ohlcv"},{"flags":["venue","symbol"],"name":"funding-rate"},{"flags":["venue","method","params","account"],"name":"raw"},{"flags":[],"name":"accounts"},{"flags":[],"name":"risk-rules"},{"description":"Without a selector, return a lightweight index. Use --command for one command's usage and safety contract, --venue for one venue's full contract, or --plugin for a compact method-availability index. Selectors are mutually exclusive.","flags":["venue","plugin","command"],"name":"describe"}],"name":"broker","nextCommands":["alva broker describe --command '<command>'","alva broker describe --venue <venue>","alva broker describe --plugin <plugin>"],"plugins":["alpaca","ccxt","ibkr_mcp","robinhood","webull"],"venues":[{"venue":"alpaca","plugin":"alpaca","createOrder":true,"options":false,"testnet":true,"markets":["equity","crypto"],"rawMethodCount":7,"nextCommand":"alva broker describe --venue alpaca"},{"venue":"binance","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"marketTypes":["spot","swap"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue binance"},{"venue":"bitget","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue bitget"},{"venue":"bybit","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue bybit"},{"venue":"coinbase","plugin":"ccxt","createOrder":true,"options":false,"testnet":false,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue coinbase"},{"venue":"gate","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue gate"},{"venue":"hyperliquid","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue hyperliquid"},{"venue":"ibkr_mcp","plugin":"ibkr_mcp","createOrder":false,"createInstruction":true,"requiresUserSubmit":true,"deletePendingInstruction":true,"observeBrokerOrders":true,"observeTrades":true,"options":false,"testnet":true,"rawMethodCount":0,"readKinds":["balance","ohlcv","order-get","order-list","positions","quote"],"nextCommand":"alva broker describe --venue ibkr_mcp"},{"venue":"okx","plugin":"ccxt","createOrder":true,"options":false,"testnet":true,"markets":["crypto"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue okx"},{"venue":"robinhood","plugin":"robinhood","createOrder":true,"options":true,"testnet":false,"noCoidLookup":true,"markets":["equity","option"],"rawMethodCount":23,"nextCommand":"alva broker describe --venue robinhood"},{"venue":"webull","plugin":"webull","createOrder":true,"options":false,"testnet":true,"markets":["equity"],"rawMethodCount":4,"nextCommand":"alva broker describe --venue webull"}],"view":"index"}
+
+════ alva auth --help ════
+Usage: alva auth login [--browser | --no-browser] [--profile <name>]
+
+By default, opens a browser locally and listens for the OAuth callback. Use
+--no-browser for SSH / container / headless environments — alva will print
+a URL to open on any device, then prompt you to paste the code shown.
+
+Auto-detect picks --no-browser when DISPLAY is missing on Linux, when
+SSH_CONNECTION is set without DISPLAY forwarding, or when CONTAINER /
+DEVCONTAINER is set.
+
+Subcommands:
+  login       Authenticate and save credentials (browser or no-browser)
+
+Flags:
+  --browser           Force the local browser + 127.0.0.1 callback flow
+  --no-browser        Force the paste-code flow (no local listener)
+  --profile <name>    Profile name to save credentials under (default: "default")
+
+Examples:
+  alva auth login                       # auto-detect
+  alva auth login --no-browser          # force paste-code flow
+  alva auth login --browser             # force browser flow
+  alva auth login --profile staging
+
+════ alva screenshot --help ════
+Usage: alva screenshot --url <url> (--base64 | --out <file>) [--selector <css>] [--xpath <xpath>] [--full] [--compress] [--compress-quality <n>] [--compress-max-width <px>]
+
+Capture a screenshot of an Alva page. Choose exactly one output mode.
+
+Required:
+  --url <url>                URL or path to capture (e.g. /playbook/alice/dashboard)
+
+Output (choose one):
+  --base64                   Emit the image as base64 to stdout. Compresses by
+                             default (max-width 1280, quality 70) unless --full.
+  --out <file>               Write the image to a local file.
+
+Optional:
+  --selector <css>           Capture a specific element by CSS selector
+  --xpath <xpath>            Capture a specific element by XPath
+  --full                     (--base64) Return the raw image, no default compression
+  --compress                 Re-encode the image to reduce file size
+  --compress-quality <n>     Compression quality 1-100
+  --compress-max-width <px>  Downscale to at most this width in pixels
+
+Examples:
+  alva screenshot --url /playbook/alice/dashboard --base64
+  alva screenshot --url /playbook/alice/dashboard --out dashboard.png
+  alva screenshot --url /playbook/alice/dashboard --out chart.png --selector ".chart-container"
+
+════ alva arrays --help ════
+Usage: alva arrays token <subcommand>
+
+Manage the Arrays JWT used by sandbox scripts (secret.loadPlaintext('ARRAYS_JWT')).
+The JWT is stored server-side as a jagent secret; the CLI never receives the
+token itself. 'alva configure' auto-runs 'token ensure' after saving credentials.
+
+Subcommands:
+  token ensure    Provision or refresh the Arrays JWT (idempotent)
+  token status    Show Arrays JWT presence, expiry, tier, and renewal hint
+
+Examples:
+  alva arrays token ensure
+  alva arrays token status

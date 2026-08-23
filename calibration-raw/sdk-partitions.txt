@@ -1,0 +1,9 @@
+{
+  "partitions": [
+    "feed_widgets",
+    "models",
+    "technical_indicator_calculation_helpers",
+    "trading_strategies",
+    "unified_search"
+  ]
+}

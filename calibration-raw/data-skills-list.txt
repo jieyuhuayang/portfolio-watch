@@ -1,0 +1,61 @@
+20 skill(s):
+
+• arrays-data-api-company-crypto-holdings [1 endpoints]
+    Guides the agent to call Arrays REST APIs for company crypto holdings. Use when the user needs data about which companies hold crypto.
+
+• arrays-data-api-crypto-analytics-passthrough
+    Forwards an arbitrary on-chain crypto analytics path + query string to the upstream provider through one Arrays passthrough route (GET /api/v1/crypto/analytics/query), unlocking ~245 endpoints. Use it for on-chain analytics that the dedicated crypto skills do NOT already cover — network-data (fees, hashrate, UTXO, addresses, supply), most network/market/flow indicators, miner flows, entity/inter-entity flows, fund-data, eth2, AMM/DEX data across BTC/ETH/XRP/TRX/ERC20/stablecoin — or when the user names a specific upstream metric/path, or asks what on-chain analytics endpoints are available. Do NOT use it when a dedicated endpoint already exists -- MVRV, NUPL, SOPR, realized price, SSR, Puell multiple, leverage ratio, whale ratio, inflow CDD, miner-to-exchange (use arrays-data-api-crypto-metrics-and-screener) and exchange inflow/outflow/netflow (use arrays-data-api-crypto-exchange-flow); crypto futures funding/open-interest/long-short come from a different source (use arrays-data-api-crypto-futures-data).
+
+• arrays-data-api-crypto-exchange-flow [1 endpoints]
+    Guides the agent to call Arrays REST APIs for crypto exchange flow data. Use when the user needs exchange inflow/outflow/netflow data for cryptocurrencies.
+
+• arrays-data-api-crypto-futures-data [6 endpoints]
+    Calls Arrays REST APIs for crypto derivatives data — perpetual K-line / OHLCV / candlestick (Binance USDT perp and Hyperliquid USDC perp, including HIP-3 tokenized equities like AAPL, TSLA), funding rates, open interest, long-short ratios, and taker buy/sell volume. Use when the user asks about perpetual futures price or volume, perp candles, funding costs, leveraged positions, derivatives market sentiment, futures data for any cryptocurrency, or any HIP-3 listing on Hyperliquid.
+
+• arrays-data-api-crypto-metrics-and-screener [18 endpoints]
+    Calls Arrays REST APIs for crypto on-chain analytics and screening — token metadata profile (name, category, description, logo, contract addresses per chain, official URLs), market cap, circulating/total supply, fear & greed index, on-chain metrics (MVRV, NUPL, SOPR, realized price, leverage ratio, SSR, whale ratio, Puell multiple, miner-to-exchange, inflow CDD), crypto metrics screener, token unlock schedules (cliff and linear allocations for DeFi protocols like Hyperliquid, Arbitrum, Uniswap, etc.), and Bitcoin correlation indices. Use when the user asks about a token's metadata/profile (full name, category, description, logo, contract addresses, website/twitter/explorer links), crypto market cap, token supply, crypto market sentiment, on-chain analysis, token screening, protocol token unlock events and vesting schedules, or Bitcoin correlation with other assets.
+
+• arrays-data-api-equity-estimates-and-targets [4 endpoints]
+    Calls Arrays REST APIs for equity estimates and price targets — analyst price target news/consensus/summary, analyst consensus estimates (EPS, SALES, EBITDA, etc.), and company earnings guidance. Use when the user asks about analyst price targets, Wall Street earnings estimates, revenue forecasts, or company guidance. NOT for stock letter-grade quality ratings — use stock-technical-metrics for those.
+
+• arrays-data-api-equity-events [10 endpoints]
+    Guides the agent to call Arrays REST APIs for equity events (dividends, splits, earnings calendar, earnings transcripts, event transcripts for shareholder meetings / conference presentations / sales calls / guidance / special situations, SEC earnings releases, IPO, M&A, equity offering, crowdfunding). Use when the user needs upcoming or historical corporate event dates, transcripts of earnings calls or any other corporate event (AGM, conference presentation, sales & revenue call), or SEC-filed earnings release documents. earnings-calendar covers US listings from 2025-01-01 onward and reaches only about 30 days into the future, so it answers "when did X report" but rarely "when is the next report" beyond a month out. For the reported figures themselves, use arrays-data-api-equity-fundamentals.
+
+• arrays-data-api-equity-fundamentals [11 endpoints]
+    Calls Arrays REST APIs for equity fundamentals — company profiles (US and non-US listings such as `0700.HK`, `9988.HK`, `000660.KS`), executive compensation (salary, bonus, stock awards), income/balance/cashflow statements, shares float, outstanding shares, fiscal dates, and KPI. Use when the user asks about company details (US or non-US), executive pay, quarterly/annual financial statements, or earnings filings. Do NOT use for financial metrics (revenue TTM, net income TTM, EPS TTM, ROE, ROA, ROIC, margins, debt ratios, current/quick ratio) or market-level technical indicators (moving averages, EMA, RSI, MACD, Bollinger, VWAP, beta, volatility, PE ratio, PB ratio, PS ratio, dividend yield, enterprise value, EV/EBITDA, price changes) — those MUST use arrays-data-api-stock-metrics.
+
+• arrays-data-api-equity-ownership-and-flow [4 endpoints]
+    Guides the agent to call Arrays REST APIs for equity ownership and flow (institutional holdings, insider transactions, congress trades, short interest). Use when the user needs data about who owns a stock, recent insider/congress trading activity, or short interest / short positioning (shares short, days-to-cover, short interest % of float or outstanding).
+
+• arrays-data-api-etf-fundamentals [5 endpoints]
+    Guides the agent to call Arrays REST APIs for ETF fundamentals (holdings, info, country/sector weightings, fund flow). Use when the user needs ETF composition, performance, or flow data.
+
+• arrays-data-api-macro-and-economics [10 endpoints]
+    Guides the agent to call Arrays REST APIs for macro and economics data (treasury rates, economic indicators, CPI, GDP, unemployment, inflation, consumer sentiment, macro index/forex/commodity, VIX). Use when the user asks about macroeconomic indicators, CPI release dates, economic data announcements, interest rates, forex, commodity prices (gold GCUSD, silver SILUSD, oil CLUSD), market index data (S&P 500 ^SPX, Dow Jones ^DJI, Nasdaq ^IXIC), or VIX volatility indexes.
+
+• arrays-data-api-news [1 endpoints]
+    Guides the agent to call Arrays REST APIs for market news. Use when the user needs market news articles.
+
+• arrays-data-api-options [4 endpoints]
+    Guides the agent to call Arrays REST APIs for stock options data — option contract specifications (strike, expiry, exercise style, active status), options OHLCV/VWAP kline data, historical option Greeks (delta, gamma, theta, vega) with implied volatility, and full option-chain snapshots (every contract on an underlying with OHLCV, Greeks, IV, open interest). Use when the user asks about options pricing, strike prices, expiration dates, options volume, options VWAP, options candlestick data, option Greeks, delta/gamma/theta/vega, implied volatility, open interest, or an option chain for a ticker.
+
+• arrays-data-api-podcast-transcripts
+    Calls Arrays REST APIs for podcast data — episode transcripts with resolved speakers, the show catalog, and the person registry. Use when the user asks for a podcast transcript, who spoke on a podcast episode, which episodes feature a specific person, a show's metadata or transcript coverage, or details about a podcast host or guest.
+
+• arrays-data-api-polymarket [18 endpoints]
+    Calls Polymarket public APIs for prediction market data — discover and search markets/events, real-time and historical pricing (order books, spreads, mid-market prices), user positions and P&L, trade history, on-chain activity, top holders, open interest. Use when the user asks about prediction markets, betting odds, Polymarket prices, order books, price history, market depth, positions, trade history, or market holders.
+
+• arrays-data-api-semiconductor-price [6 endpoints]
+    Guides the agent to call Arrays REST APIs for semiconductor price data (DRAM spot & contract price, NAND Flash spot & contract price, Memory Card price, DXI index). Use when the user asks about DRAM prices, DDR3/DDR4/DDR5 memory pricing, NAND Flash prices (MLC/SLC), MicroSD card prices, contract/long-term memory pricing, the TrendForce DRAMeXchange (DXI) index, or semiconductor component pricing trends.
+
+• arrays-data-api-social-feeds [6 endpoints]
+    Calls Arrays REST APIs for social feeds — posts from tracked X/Twitter handles (history + recent), post lookup by URL, full-text search across the indexed corpus, handle entity metadata, the currently-tracked accounts list, and starting tracking of a new handle (discovery). Use when the user asks for tweets from a specific account, recent posts from a handle, posts referenced by a URL, posts matching a query or phrase, metadata about an X/Twitter handle, a list of accounts already in the tracking registry, or to start tracking / discover a handle that isn't tracked yet.
+
+• arrays-data-api-spot-market-price-and-volume [4 endpoints]
+    Calls Arrays REST APIs for spot market prices and volume — US and non-US stock kline plus crypto spot price/volume/candlestick/kline/OHLCV data on Binance (spot USDT) and Hyperliquid (spot USDC). Use when the user asks for raw spot price/volume/OHLCV/candlestick/kline data, Binance or Hyperliquid spot prices, HYPE candles, or non-US stock kline (daily or intraday) for dotted-suffix tickers like `0700.HK`, `9988.HK`, or `000660.KS`. For perpetual futures kline / volume / funding rate / open interest / long-short ratio / taker buy-sell volume / HIP-3 tokenized equities (AAPL, TSLA on Hyperliquid), use arrays-data-api-crypto-futures-data. For token metadata profile (name, category, description, logo, contracts, official URLs) and metrics including market cap, crypto supply, moving averages, EMA, SMA, RSI, MACD, Bollinger Bands, VWAP, beta, volatility, PE ratio, PB ratio, PS ratio, dividend yield, enterprise value, EV/EBITDA, price change percentages (1d/1w/1M/3M/6M/YTD/1Y), use arrays-data-api-stock-metrics for stocks and arrays-data-api-crypto-metrics-and-screener for crypto.
+
+• arrays-data-api-stock-metrics [4 endpoints]
+    Guides the agent to call Arrays REST APIs for stock metrics — financial metrics (revenue TTM, net income TTM, EPS TTM, ROE, ROA, ROIC, margins, debt ratios, current/quick ratio), market/technical metrics (market cap, moving averages, EMA, SMA, RSI, MACD, Bollinger, VWAP, beta, volatility, PE ratio (incl. trailing P/E and forward P/E), PB ratio, PS ratio, dividend yield, enterprise value, EV/EBITDA, price changes), darkpool OHLC, and PIT ratings. Use when the user asks about stock market cap, financial ratios, computed market indicators (including trailing or forward P/E), darkpool data, or point-in-time stock quality ratings (letter-grade scores like A+, B, C based on DCF, ROE, P/E, etc.).
+
+• arrays-data-api-stock-screener [6 endpoints]
+    Calls Arrays REST APIs for stock screening and filtering — basic-info screener by country/exchange/industry/sector, event screener (IPO/splits/earnings), and financial/technical metrics screener. Use when the user wants to find, filter, or screen stocks by any criteria.
