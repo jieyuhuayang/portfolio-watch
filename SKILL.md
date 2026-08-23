@@ -37,6 +37,22 @@ Every decision below exists to protect one of three promises to the user:
 3. **The page is alive** — the Playbook reads the Feed; nothing is hardcoded,
    and staleness is visible, never disguised.
 
+## Speak the user's dialect
+
+Two vocabularies are in play and mixing them up costs trust:
+
+- **User-facing words** (use these in every reply, summary, README, and UI
+  label): *automation*, *playbook*, *alert* / *notification*, *Agent*,
+  *script*. The platform UI never shows the words "feed" or "producer".
+- **Internal words** (fine inside this skill, code, CLI calls, and logs):
+  *feed*, *producer*, *KV*, output groups. Surface them to the user only
+  when they are looking at raw data, logs, API fields, or an Automation's
+  detail view.
+- **One trap**: the button on a public Playbook that reads "Subscribe" is a
+  *follow* — it does **not** subscribe anyone to that playbook's alerts.
+  When a user says "I subscribed", find out which of the two they mean
+  before reasoning about delivery.
+
 ## 0. Route before you build
 
 Decide what the user needs to *hold* at the end, then pick the route. Do not

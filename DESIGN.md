@@ -87,7 +87,25 @@ Playbook**。
 是否过度建设、是否默认 private、是否拒绝为分享暴露绝对值。
 详见 `evals/evals.json` 与评测报告。
 
-## 7. 已知盲区
+## 7. 实地裁决记录（v2 术语校准）
+
+基于实地调研 evidence（浏览器行为观察 + 官方 skill 文档），v2 做了以下裁决：
+
+- **"Feed" 是内部词**：产品 UI 全程未出现 "Feed"/"Producer"，用户可见词是
+  automation / playbook / alert / Agent / script（官方文档明文规定 +
+  UI 行为双重确证）。Skill 新增 "Speak the user's dialect" 一节，
+  区分内部词汇与用户话术。
+- **follow ≠ alert 订阅**（行为确证）：公开 Playbook 上的 "Subscribe" 按钮
+  是 follow，点击后 Alert 订阅列表无新增；follower 要收 alert 必须另行
+  建立 alert binding。这直接支撑了 v2 的"送达四条件"拆分（bot#6 与实地
+  一致）。
+- **运行流与通知流是两条流**（行为确证）：用量页逐 run 计费记录 ≠ 通知；
+  每分钟失败的自动化只在对话里留一条系统消息。"安静 ≠ 停摆"（bot#7）
+  与实地一致。
+- **无顶层 await**（文档 + agent 行为旁证）：线上 agent 自己写的
+  `alva run --code` 脚本即为 `(async()=>{...})();` 形态。
+
+## 8. 已知盲区
 
 - 平台 API 具体签名以线上 SDK 文档为准，Skill 已把"fresh discovery、不凭
   记忆调 API"写为强制步骤，但未经真实环境冒烟。
