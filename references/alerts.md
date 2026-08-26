@@ -15,9 +15,15 @@ alert starts the path to mute, and mute is churn for a watch product.
 | `price_move` (fast) | \|1h change\| ≥ threshold% (fat-finger/flash events) | warning |
 | `news` | `events` row with `materiality: high` for a held asset | warning |
 
+Class-specific Tier A kinds — `gap`, `earnings_event`, `volume_anomaly` for
+equities (`asset-equity.md` §5) — enter the same tiers, fingerprints, novelty
+gate, and digest as the rows above; a new asset class adds rows to this
+taxonomy, never a parallel alert system.
+
 Volatility-scaled, not flat: a flat "±5%" rule alerts weekly on a mid-cap and
 never on a stablecoin-heavy book — σ-scaling makes "unusual" mean unusual
-*for that asset*. Dust-bucket (`OTHER`) assets never fire Tier A.
+*for that asset*. The σ window unit is per class (trading days for equities,
+calendar days for crypto). Dust-bucket (`OTHER`) assets never fire Tier A.
 
 ### Tier B — portfolio events (`subject: portfolio`)
 
@@ -25,7 +31,7 @@ never on a stablecoin-heavy book — σ-scaling makes "unusual" mean unusual
 |---|---|---|
 | `drawdown` | drawdown_30d **crosses a band edge** (bands: 5/10/15/20/30%) | warning; critical ≥ 15% |
 | `concentration` | top_weight crosses 40% (or 1.25× its 30d mean) | info |
-| `depeg` | any held stablecoin deviates > 1% from 1.00 for 2 consecutive runs | critical |
+| `depeg` | any held stablecoin deviates > 1% from 1.00 for 2 consecutive runs (crypto only — owned by `asset-crypto.md`) | critical |
 
 Banded, not continuous: drawdown alerts fire on *entering* a band, so a
 portfolio oscillating around −9.8%…−10.2% alerts once, not every hour.
@@ -56,6 +62,10 @@ not in σ:
 Publish the "expected volume" line to the user when they pick — a threshold
 is meaningless to most people; "about one or two a week" is a promise they
 can hold the product to. Tuning changes config only, never code.
+
+Asset modules supply their own parameter values for the same three presets
+(e.g. the equity table in `asset-equity.md` §6) — one knob, class-specific
+mappings. The expected-volume promise is mandatory regardless of class.
 
 ## 3. The novelty gate
 

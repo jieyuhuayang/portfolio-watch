@@ -29,9 +29,10 @@ One row per held asset (plus one `OTHER` dust row), replaced each run.
 
 | Field | Type | Notes |
 |---|---|---|
-| `asset` | string | e.g. `BTC`; `OTHER` for the dust bucket |
-| `pair` | string | resolved trading pair, e.g. `BTC/USDT`; `null` if unpriced |
-| `qty` | string | decimal-as-string; crypto quantities exceed float precision |
+| `asset` | string | e.g. `BTC`, `NVDA`; `OTHER` for the dust bucket |
+| `asset_class` | enum | `crypto` \| `equity` — additive in v3; routes class-specific rendering and judgment |
+| `pair` | string | resolved priced instrument — trading pair for crypto (`BTC/USDT`), kline symbol for equities; field name kept for compatibility; `null` if unpriced |
+| `qty` | string | decimal-as-string; crypto quantities exceed float precision; **null in watchlist mode** (as are `value_usd` and `weight` — never fabricate them) |
 | `price` | number | quote in USDT |
 | `value_usd` | number | qty × price |
 | `weight` | number | value / NAV, 0–1 |
@@ -59,9 +60,15 @@ One row per run.
 | `top_weight` | number | largest single-asset weight |
 | `unpriced_count` | int | assets excluded from NAV this run |
 | `stale_count` | int | assets carried this run |
+| `market_state` | enum | `open` \| `closed` \| `mixed` — additive in v3; nullable. Lets the badge say "market closed" instead of the page deriving (or worse, guessing) it |
 
 `unpriced_count` and `stale_count` are in the contract so the UI can honestly
-badge freshness without re-deriving it.
+badge freshness without re-deriving it; `market_state` extends the same
+honesty to closed markets — a weekend is quiet, not stale.
+
+In watchlist mode `nav_usd`, `pnl_24h`, `drawdown_30d`, and `top_weight` are
+null (no quantities → no NAV math); `stable_ratio` is computed over the
+crypto sleeve only and is null when no crypto is held.
 
 ### `events` — event log
 
@@ -94,7 +101,7 @@ alert timeline and the record of what the watch judged, delivered or not.
 |---|---|---|
 | `alert_id` | string | fingerprint (see below) — doubles as dedup key |
 | `subject` | string | `asset:BTC` \| `portfolio` \| `system` |
-| `kind` | string | `price_move` \| `drawdown` \| `concentration` \| `depeg` \| `news` \| `connection` |
+| `kind` | string | `price_move` \| `drawdown` \| `concentration` \| `depeg` \| `news` \| `connection` \| `gap` \| `earnings_event` \| `volume_anomaly` (class-specific kinds per asset modules) |
 | `state` | string | normalized current state, e.g. `drawdown_band:10-15` |
 | `severity` | enum | `info` \| `warning` \| `critical` \| `action-needed` |
 | `evidence_ts` | timestamp | time of the underlying evidence |
@@ -130,7 +137,10 @@ forever after the first run.
   The novelty gate compares against *notified* state, not merely previous
   state — otherwise a value oscillating around a threshold re-alerts forever.
 - `baseline:<asset>:sigma20d` → rolling volatility (recomputed daily, cached
-  hourly runs need not refetch 20d of candles).
+  hourly runs need not refetch 20d of candles). The 20-day window unit is
+  per asset class — trading days for equities, calendar days for crypto —
+  and the separate-watermarks-per-cadence rule above now also separates
+  classes: an equity σ watermark advances only on trading days.
 - `seen_event:<event_id>` → prevents re-processing news across runs.
 - `watch_created_ts`, `nav_at_creation` → the "since you started watching"
   baseline for rung-B P&L.

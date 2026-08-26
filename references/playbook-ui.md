@@ -32,8 +32,11 @@ Top to bottom — order mirrors the ten-second scan:
    - Badge states: `live` (last run on schedule, stale_count = 0) /
      `partial` (stale_count > 0 — "N assets showing last known price") /
      `stale` (missed runs — banner with last successful run time).
-   - The badge reads `stale_count`/timestamps from the Feed; the page never
-     computes its own optimistic freshness.
+   - The badge reads `stale_count`/timestamps/`market_state` from the Feed;
+     the page never computes its own optimistic freshness. **Market-aware**:
+     when `market_state` is `closed`, the badge reads "as of <close time> ·
+     market closed" and renders as `live` — a weekend must never display as
+     `stale`, or the one badge that must stay meaningful goes numb.
 2. **Holdings table** (`positions`): asset, value, weight bar, 24h/7d change,
    move_score flag (⚡ when ≥ preset K). Default sort: weight. Stale rows
    visibly muted with a "carried price" marker. `OTHER` row expandable.
@@ -45,6 +48,21 @@ Top to bottom — order mirrors the ten-second scan:
 5. **Method panel** (from README content): what is watched, active preset and
    its thresholds, refresh cadence, known blind spots (spot-only, unpriced
    assets, cost-basis rung), and where the data comes from.
+
+**Watchlist variant** (bare-watchlist mode, no quantities —
+`portfolio-source.md` §2): the same scan order with the NAV math honestly
+absent, never faked:
+
+1. Header band without NAV/P&L: N assets watched, biggest mover since prior
+   close, as-of timestamp, market-aware freshness badge.
+2. Watch table: drops the value/weight columns; keeps price, day change,
+   move_score flag; adds next-earnings-date for equities.
+3. Chart: per-asset performance rebased to 100 at watch creation ("since
+   you started watching") instead of a NAV line.
+4. A visibly-dark Tier-B panel: portfolio-level alerts (drawdown,
+   concentration) are off because position sizes are unknown, plus the
+   one-line unlock ("say 'I hold 20 NVDA' anytime, or connect an account").
+5. Alert timeline and method panel unchanged.
 
 Every rendered number is read from the Feed in the browser at view time. If
 a field is missing, render an explicit gap ("—" with a tooltip), never a
@@ -121,7 +139,8 @@ The remix story for a portfolio watch: the **method is the shareable asset;
 the data binding is personal.**
 
 - A remixer gets the template — layout, alert rules, presets, README — with
-  lineage preserved, and binds **their own** Binance connection on setup.
+  lineage preserved, and binds **their own** source on setup (account
+  connection, holdings list, or tickers — `portfolio-source.md` §2).
   They never inherit or see the original owner's Feed.
 - Keep every user-tunable parameter (preset, dust threshold, cadence) in
   config, not hardcoded into producer logic or HTML — a template whose

@@ -1,29 +1,33 @@
 ---
 name: portfolio-watch
 description: >-
-  Turn "watch my portfolio" into a live, alert-enabled Alva Playbook backed by
-  the user's connected Binance account. Use this skill whenever the user wants
-  to monitor, track, watch, or get alerts about their crypto holdings,
-  portfolio, positions, balances, P&L, or drawdown — including phrasings like
-  "keep an eye on my coins", "tell me when something big happens to my
-  portfolio", "build me a dashboard of my Binance account", or "盯着我的持仓 /
-  组合有大动静提醒我". Also use it when the user asks a one-off question about
-  how their portfolio is doing (answer first, then offer the watch), or wants
-  to tune, pause, share, or remix an existing portfolio watch. Produces the
-  full pipeline: portfolio Feed + scheduled Automation + Playbook UI + semantic
-  alerts.
+  Turn "watch my portfolio" into a live, alert-enabled Alva Playbook — for
+  stocks, crypto, or both, whether the portfolio is a connected account
+  (Binance today), a declared holdings list, or just a few tickers the user
+  names. Use this skill whenever the user wants to monitor, track, watch, or
+  get alerts about their portfolio, holdings, positions, watchlist, balances,
+  P&L, or drawdown — including phrasings like "keep an eye on my NVDA, TSLA,
+  and AAPL, ping me when something big happens", "watch my stocks", "keep an
+  eye on my coins", "build me a dashboard of my Binance account", or
+  "盯着我的美股 / 盯着我的持仓 / 组合有大动静提醒我". Also use it when the
+  user asks a one-off question about how their portfolio or watchlist is
+  doing (answer first, then offer the watch), or wants to tune, pause, share,
+  or remix an existing portfolio watch. Produces the full pipeline: portfolio
+  Feed + scheduled Automation + Playbook UI + semantic alerts.
 ---
 
 # Portfolio Watch
 
 Build a **portfolio watch**: a continuously refreshed view of the user's
-Binance holdings that (a) renders as a live Playbook and (b) speaks up — once —
-when something *material* changes, and stays quiet otherwise.
+holdings — stocks, crypto, or both — that (a) renders as a live Playbook and
+(b) speaks up — once — when something *material* changes, and stays quiet
+otherwise.
 
 A portfolio watch is not a page. It is a pipeline:
 
 ```
-Binance account truth  →  priced snapshot  →  bounded history
+portfolio truth (account · declared holdings · watchlist)
+        →  priced snapshot  →  bounded history
         →  material-change judgment  →  quiet-by-default alerts
         →  live Playbook UI
 ```
@@ -73,50 +77,68 @@ Before building, check whether a portfolio watch already exists for this user
 kind of "success" that becomes a support ticket.
 
 **One blocking question, maximum.** The only question worth blocking on is
-account access (§1). Everything else has a sensible default the user can tune
+**source truth** (§1): account access when nothing else identifies the
+portfolio, or a single symbol that cannot be honestly resolved to one asset.
+Tickers alone are a buildable portfolio — never block a watchlist build to
+ask for quantities. Everything else has a sensible default the user can tune
 later — defaults are listed in §2. State the defaults you chose in your final
 summary so the user knows what to change.
 
-## 1. Preflight: account truth
+## 1. Preflight: source and symbol truth
 
-Run identity and connection checks before writing any code:
+Run identity and source checks before writing any code:
 
 1. Confirm who you are acting as (`whoami`-equivalent) — a watch built against
-   the wrong scope is worse than no watch.
-2. Check for a connected Binance account.
-   - **Connected** → read spot balances. This is the portfolio's source of
-     truth. Never substitute a remembered or user-recalled balance for the API
-     result.
-   - **Not connected** → this is your one blocking question. Offer two paths:
-     connect Binance (preferred — live truth, P&L, no manual upkeep), or a
-     **manual holdings list** (ticker + quantity) the user dictates. The manual
-     path builds the same pipeline with the holdings snapshot as a static input
-     the user must update; say so honestly.
+   the wrong scope is worse than no watch. Note the account's active IM
+   provider while you're there: alerts route through it (§7's delivery chain),
+   and if none is connected, tell the user in the final summary how to connect
+   one so alerts reach their phone — don't block the build on it.
+2. **Resolve the portfolio source** (full rules: `references/portfolio-source.md`):
+   - **User named tickers** → watchlist or declared-holdings mode. Classify
+     each symbol's asset class (NVDA/TSLA → equities; BTC/ETH → crypto;
+     mixed → both) and **read the matching `references/asset-*.md` module(s)
+     before building**. Tickers alone are sufficient to build — quantities
+     unlock NAV-level features and are an upgrade note, never a prerequisite.
+   - **No tickers named** → check for a connected account (Binance today).
+     Connected → read spot balances; that is the source of truth. Never
+     substitute a remembered or user-recalled balance for the API result.
+   - **Neither** → this is your one blocking question. Offer three paths:
+     connect an account (live truth, P&L, no upkeep), declare holdings
+     (ticker + quantity, user-maintained — say so honestly), or just name
+     tickers to watch.
 3. An **empty portfolio is a valid state**, not an error. Build the watch
    anyway if asked; the Playbook shows an empty state and alerts activate when
    holdings appear.
 
-Details, scope rules (spot vs. futures, dust filtering, stablecoin handling),
-and the full degradation ladder: `references/binance-portfolio.md`.
+Source modes, degradation ladder, and mixed-portfolio rules:
+`references/portfolio-source.md`. Asset-class specifics:
+`references/asset-crypto.md`, `references/asset-equity.md`.
 
 ## 2. Defaults (decide, don't ask)
 
-Apply these unless the user specified otherwise; report them in the summary:
+Apply these unless the user specified otherwise; report them in the summary.
 
-- **Scope**: Binance spot balances; positions worth < $10 *and* < 0.5% of NAV
-  are folded into an "Other" bucket (dust must not spam alerts).
-- **Quote currency**: USDT (display USD).
-- **Refresh cadence**: hourly. Crypto trades 24/7 — there is no market-close
-  cadence to borrow; hourly balances alert latency against cost. Alert
-  evaluation runs on every refresh.
+Invariant across asset classes:
+
 - **Alert sensitivity**: `normal` preset (see `references/alerts.md`; presets
-  are `calm` / `normal` / `sensitive`).
+  are `calm` / `normal` / `sensitive`; asset modules supply class-specific
+  parameter values).
+- **Dust**: positions worth < $10 *and* < 0.5% of NAV fold into an "Other"
+  bucket (dust must not spam alerts).
 - **Visibility**: **as private as the account's tier allows.** A portfolio
   watch contains real wealth data. Private *released* playbooks are a
   paid-tier feature; on a free-tier account the honest choices are to stop at
   **draft** (pre-publication state) or to release a **share-safe** page
   (§6) — never to resolve the tier limit by silently publishing real
   balances. Say which of the three the user is getting and why.
+
+Per asset class (authoritative values live in the asset modules):
+
+| | Cadence | Quote | "Change" anchor |
+|---|---|---|---|
+| Crypto (`asset-crypto.md`) | hourly, 24/7 | USDT (display USD) | rolling 24h; 20 calendar-day σ |
+| Equities (`asset-equity.md`) | market-hours cron | USD | vs prior close; 20 trading-day σ |
+| Mixed | union of the above | USD (USDT labeled) | per class, one clock (`portfolio-source.md` §5) |
 
 ## 3. Feed: the contract everything else depends on
 
@@ -134,6 +156,9 @@ Create one Feed with these output groups (full schemas and field tables in
 - KV state — last-notified fingerprints and rolling baselines (the memory
   that makes "has this changed?" answerable).
 
+In watchlist mode (tickers, no quantities), `qty`/`value`/`weight` are null
+and NAV-derived judgment stays dark — see `references/portfolio-source.md`.
+
 Time semantics are part of the contract: prices carry candle time, events
 carry publish time, snapshots carry run time. Never stamp everything with run
 time because it is convenient — it silently corrupts every later comparison.
@@ -144,13 +169,18 @@ The producer script runs in the jagent runtime (isolated per run — anything
 needed next run must be written to the Feed or ALFS). Follow the annotated
 template in `references/producer.md`. The shape:
 
-1. Read balances from the account API; resolve each asset to its actual
-   traded pair (BTC → BTC/USDT) — never assume symbol == pair.
+1. Read holdings from the resolved source (account API, declared list, or
+   watchlist config); resolve every symbol to its priced instrument per its
+   asset-class module (BTC → BTC/USDT; NVDA → US-equity kline symbol) —
+   never assume symbol == instrument.
 2. Fetch prices via data skills. **Discover endpoints fresh** (list → summary
    → endpoint); do not call remembered API shapes.
 3. Compute NAV, weights, changes **against bounded history** read from the
-   Feed (last run, 20-day window). A run that sees only the present can
-   report state but can never judge change.
+   Feed (last run, 20-day window — σ windows per the asset module: trading
+   days for equities, calendar days for crypto). A run that sees only the
+   present can report state but can never judge change. Judge each asset
+   only inside its market's session (`asset-equity.md` §3): an equity on a
+   weekend is quiet, not stale.
 4. Use the embedded LLM (alpi) **only** to classify and synthesize evidence —
    e.g., "is this news material to a held asset?" — over real fetched
    sources, returning strict JSON. It never produces a number that lands in
@@ -166,6 +196,12 @@ that fires because an API returned 0 destroys promise #2 permanently — users
 forgive a quiet bug, not a false alarm about their money.
 
 ## 5. Automation: make it a standing service
+
+**One watch, one cronjob.** Cadence is the union of the held asset classes
+(anything crypto → hourly 24/7; pure equity → market-hours cron) and the
+producer applies each class's judgment windows internally — never add a
+second automation to serve a second asset class. Two clocks writing one
+product's numbers disagree during every timing gap.
 
 1. Verify the producer manually **twice** (different times) with the
    platform's non-delivering run command before scheduling; confirm the
@@ -190,9 +226,11 @@ Build the Playbook per `references/playbook-ui.md`. Non-negotiables:
 - Every number on the page comes from the Feed at render time. No hardcoded
   values, no LLM-era numbers frozen into HTML.
 - The page shows **as-of time** and a freshness badge; stale assets are
-  visibly flagged.
+  visibly flagged. The badge is market-aware: a closed market renders as
+  "market closed", never as `stale`.
 - Layout: NAV header (value, 24h P&L, drawdown) → holdings table → NAV chart
-  with drawdown shading → alert timeline → method/README.
+  with drawdown shading → alert timeline → method/README. Watchlist mode
+  (no quantities) uses the watchlist variant in `references/playbook-ui.md`.
 - Follow the design system; run the design lint; take the screenshot; ship
   the README (what it watches, thresholds in force, update cadence, known
   blind spots). The README is the method's honest label, not decoration.
@@ -205,7 +243,10 @@ Build the Playbook per `references/playbook-ui.md`. Non-negotiables:
 ## 7. Alerts: the product's voice
 
 Full taxonomy, thresholds, presets, and the novelty algorithm live in
-`references/alerts.md`. The principles that govern all of it:
+`references/alerts.md`; class-specific kinds (equity gap/earnings/volume,
+crypto depeg) are defined in the asset modules and flow through the same
+tiers, fingerprints, novelty gate, and digest. The principles that govern
+all of it:
 
 - Alert on **state changes, not states**. "BTC is down 12% from your entry"
   is an alert once — not every hour that it remains true.
@@ -223,7 +264,8 @@ Full taxonomy, thresholds, presets, and the novelty algorithm live in
 
 Do not report success until every line is true:
 
-- [ ] Account read verified (or manual-holdings fallback explicitly chosen).
+- [ ] Source resolved and verified: account read succeeded, or declared
+      holdings / watchlist symbols each resolved to exactly one instrument.
 - [ ] Producer ran manually twice; second run consumed first run's history.
 - [ ] Feed readable with the declared schema; time semantics correct.
 - [ ] Automation scheduled; run history green; alert output bound.
@@ -257,7 +299,9 @@ paper over a failed gate with a static page that looks alive.
 
 | File | Read it when |
 |---|---|
-| `references/binance-portfolio.md` | Preflight, account scope, degradation ladder, symbol resolution |
+| `references/portfolio-source.md` | Preflight: source modes, degradation ladder, mixed portfolios, privacy |
+| `references/asset-crypto.md` | Any crypto holdings: Binance scope, pair resolution, cadence, crypto alert kinds |
+| `references/asset-equity.md` | Any stock/ETF holdings: sessions, change semantics, equity alert kinds |
 | `references/feed-contract.md` | Designing or modifying the Feed schema |
 | `references/producer.md` | Writing the producer script |
 | `references/alerts.md` | Defining alert rules, thresholds, novelty gate |

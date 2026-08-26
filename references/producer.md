@@ -51,13 +51,19 @@ feed.def("alerts", {
 
 (async () => {                               // no top-level await in jagent
   await feed.run(async (ctx) => {
-    // ── 1. Account truth ──────────────────────────────────────────
-    const balances = await readBinanceSpotBalances();
-    // Auth failure? → degrade per binance-portfolio.md §5:
+    // ── 1. Portfolio truth ────────────────────────────────────────
+    const holdings = await readHoldings(source);
+    // source is one of three modes (portfolio-source.md §2):
+    //   connected account → live balances via the account API
+    //   declared holdings → user-maintained list from config (ticker+qty)
+    //   bare watchlist    → tickers from config; qty/value/weight stay null
+    // Auth failure? → degrade per portfolio-source.md §3:
     // carry last snapshot, stale banner, ONE `connection` alert, return.
 
     // ── 2. Pricing (data skills, fresh discovery) ─────────────────
-    const priced = await priceAssets(balances);
+    const priced = await priceAssets(holdings);
+    // pricing path chosen per asset_class (crypto pair vs equity kline);
+    // resolution rules live in the asset-*.md modules.
     // per-asset failure → pricing:"carried", stale:true, NO alerts for it.
     // >50% of NAV stale → write the nav row with stale_count, suppress ALL
     // alerts this run. Never judge a portfolio you can only half see.
@@ -111,6 +117,15 @@ alert) or that it didn't when it did (duplicate next run). Choose the failure
 you can live with — here, a rare duplicate beats a silent miss, so
 fingerprints commit last.
 
+**Class-aware judgment windows (one clock).** A mixed portfolio still runs
+on a single cron — the union cadence — and the producer classifies each run
+per asset class: for equities, pre-open / regular-hours / close-run /
+off-session by the run timestamp (`asset-equity.md` §3); crypto is always
+in session. An asset outside its session is refreshed if new data exists but
+is **never judged** that run, and is *not* marked stale — off-session is
+quiet by design. Session gates live here, in the producer, never in a second
+cronjob.
+
 **Every write must be idempotent.** A run can die after some writes and be
 retried, so design each append to be safely repeatable: key appends by
 stable identity (`alert_id` fingerprint, `event_id`, run-stamped NAV rows)
@@ -157,12 +172,14 @@ const text = message.content
 Configuration principles:
 
 - **System prompt** pins the role: "You classify news relevance and
-  materiality for specific held crypto assets. You are given fetched source
+  materiality for specific held assets. You are given fetched source
   text. You never estimate prices, balances, or percentages. Output strict
   JSON: `{asset, materiality: high|medium|low, synopsis}`. Materiality means:
-  would a holder of this asset plausibly act on this? Protocol hacks,
-  delistings, regulatory actions, tokenomics changes → high. Routine price
-  commentary, influencer opinions, 'top 10 coins' listicles → low."
+  would a holder of this asset plausibly act on this? Crypto: protocol
+  hacks, delistings, regulatory actions, tokenomics changes → high.
+  Equities: guidance cuts, M&A, restatements, delistings, trading halts,
+  major analyst-target moves → high. Routine price commentary, influencer
+  opinions, 'top 10' listicles → low."
 - **Tools**: fetch-verified-source, read-feed-history (to see what was
   already covered). No tool that writes numbers.
 - **Defensive parse**: malformed JSON → drop the item, log it, continue. A
