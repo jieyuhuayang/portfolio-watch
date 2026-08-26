@@ -1,0 +1,23 @@
+3 alert(s):
+
+• portfolio-watch-equity-demo  [ACTIVE]
+    target: FEED 27821
+    channel: 5025
+    kind: FEED_ALERT
+    automation status: ACTIVE
+    used by: 1
+
+• portfolio-watch-demo  [ACTIVE]
+    target: FEED 27738
+    channel: 5025
+    kind: FEED_ALERT
+    automation status: ACTIVE
+    used by: 1
+    last pushed: 2026-08-25T05:00:26.218Z
+
+• portfolio-watch-demo-safe  [PAUSED]
+    target: FEED 27741
+    channel: 5025
+    kind: FEED_ALERT
+    automation status: PAUSED
+    used by: 1

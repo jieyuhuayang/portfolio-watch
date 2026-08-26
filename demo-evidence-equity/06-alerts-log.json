@@ -1,0 +1,24 @@
+[
+  {
+    "date": 1787729022345,
+    "alert_id": "asset:NVDA:earnings_event:earnings:2026-08-26",
+    "subject": "asset:NVDA",
+    "kind": "earnings_event",
+    "state": "earnings:2026-08-26",
+    "severity": "info",
+    "evidence_ts": "2026-08-26",
+    "headline": "NVDA reports earnings today (after market close)",
+    "detail": "Expect elevated volatility around the report."
+  },
+  {
+    "date": 1787729195527,
+    "alert_id": "system:test:test-delivery",
+    "subject": "system",
+    "kind": "test",
+    "state": "test-delivery",
+    "severity": "info",
+    "evidence_ts": "2026-08-26T07:26:35.527Z",
+    "headline": "Test alert — delivery chain verification",
+    "detail": "Sent once to prove the pipeline; the novelty gate suppresses repeats."
+  }
+]

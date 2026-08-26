@@ -69,11 +69,12 @@ Playbook**。
 
 ## 5. 路线图
 
-- **v1（本 Skill）**：Binance 现货、σ 标定 alert、私有 Playbook、share-safe、
-  manual-holdings 降级。
-- **v1.5**：合约/杠杆仓位（需要独立的保证金与清算距离 alert 类型，不是把
-  杠杆仓塞进现货 NAV——这是 v1 明确排除它的原因）；成本价导入向导。
-- **v2**：多账户/跨所聚合；alert 规则的用户自定义层（在 preset 之上开白盒）；
+- **已交付（v3 重构）**：多资产（美股 + crypto）与三来源模式（连接账户 /
+  申报持仓 / 纯 watchlist）——v1 时排在 v2 的"多资产"被题目字面例句
+  （NVDA/TSLA/AAPL）证明是 v1 必须项，见 §11。
+- **v-next**：合约/杠杆仓位（需要独立的保证金与清算距离 alert 类型，不是把
+  杠杆仓塞进现货 NAV——这是明确排除它的原因）；成本价导入向导；
+  多账户/跨所聚合；alert 规则的用户自定义层（在 preset 之上开白盒）；
   官方 Blueprint 化——把高留存 watch 的参数组合沉淀为可发现模板。
 - **持续**：alert 质量反馈闭环（每条 alert 可标"有用/噪音"，反哺阈值与
   materiality 分类器）。
@@ -167,7 +168,46 @@ Playbook**。
 | 13 | fail-fast 与降级阶梯的调和(窄化 carried 为显式业务状态) | 阶段 2 校准,有意偏离,§8.1 佐证 |
 | 14 | 验证纪律:alva run(不投递)测,deploy trigger(真投递)只用于受控送达 | 阶段 2 校准 + 阶段 3 实测 |
 
-## 10. 已知盲区
+## 11. v2→v3 变更清单（多资产重构，来源标注）
+
+| # | 变更 | 来源 |
+|---|---|---|
+| 1 | 来源层拆分：binance-portfolio.md → portfolio-source.md（资产无关）+ asset-crypto.md（类别模块），git mv 保历史 | 题目字面例句是美股；"任何用户"= 入口分布 × 资产分布 |
+| 2 | bare watchlist 升为一等模式（Rung C′）：零阻塞构建、禁合成等权 NAV、Tier B 显式熄灯+升级路径 | 题目例句无账户无数量；promise #1 |
+| 3 | 新增 asset-equity.md：交易日 σ、close-run 锚、gap 只判一次、量能只在收盘判、休市≠stale、财报临近 | 股市会闭市——半个模块都是这个事实的推论 |
+| 4 | 混合组合"一个时钟"：单 automation 取 cadence 并集，类别判断窗口在 producer 内 | §8.2 的 500 坑毗邻行为 + share-safe 同时钟原则复用 |
+| 5 | 阻塞问题泛化为"来源真值"（账户接入 或 无法诚实解析的单个 symbol） | 歧义 ticker 建错资产违反 promise #1 |
+| 6 | frontmatter 触发词覆盖股票/watchlist（含题目原句逐字），避开 trade-setup 路由词汇 | 触发是 skill 的第一道产品面 |
+| 7 | preflight 记录 active_im_provider，未连接时在总结中给连接指引（不阻塞、不断言传输层） | 官方 push-notifications.md 契约 |
+| 8 | feed-contract 增量演进：asset_class、market_state、watchlist 空值语义（全部 additive） | 契约自身的 §5 演进规则 |
+| 9 | evals iteration-3：+eval-7（题目原句）/+eval-8（混合组合），eval-5/6 去饱和收紧全部落地 | iteration-2 排队项；v2 基线 13/19 vs v3 19/19 证明重构是承重的 |
+
+官方路由文档对 `alva/portfolio-watch-setup` 的描述（"monitoring known
+tickers, manual holdings, or connected Portfolio Accounts"）与三来源模式
+不谋而合——平台自己的产品模型印证了这个抽象。
+
+## 12. 真机踩坑记录（阶段 3-equity 实测，证据在 demo-evidence-equity/）
+
+1. **deploy cron 无时区 flag（UTC-only，已实测确认）**：美东交易窗编码为
+   `*/30 13-21 * * 1-5` UTC，DST 漂移由 producer 内数据驱动的会话门吸收
+   （用 bar 时间戳判断开市/收盘/新会话，完全不做时钟数学——这也顺带
+   免疫了 DST）。asset-equity.md 的 [unverified-live] 项就此落实。
+2. **公开 playbook 引用私有 feed 会被 412 FAILED_PRECONDITION 拦截**
+   （"confirm that bundled non-public Feeds are delivered to the Playbook
+   audience"）——平台在发布层强制数据可见性一致，这是个好门；watchlist
+   feed 无财富数据，set-visibility public 后放行。
+3. **新发布 automation 的告警 fanout 未生效（写入成功、送达缺席）**：
+   两次受控触发（run 25821036 / 25823638）均把 digest 记录写入声明输出，
+   四门逐项复核为就绪（alertOutput 已声明、push_notify 开、binding
+   ACTIVE ch5025、delivery isEnabled，路由与正常投递的 crypto automation
+   逐字段 diff 一致），但 `alert history` 始终无 sent 行；期间 alert
+   history 接口出现过 504。同机制的 crypto automation 前一日仍正常投递
+   —— 判定为平台侧 fanout 问题（新 automation 或后端降级），已按证据
+   整理待提交平台反馈。教训与 skill 条文一致：**送达证明只认
+   `alert history` 的 sent 行**，写入成功和四门就绪都不是送达 ——
+   这条纪律正是这次让"看起来配好了"没有被误报成"已送达"的东西。
+
+## 13. 已知盲区
 
 - 平台 API 具体签名以线上 SDK 文档为准，Skill 已把"fresh discovery、不凭
   记忆调 API"写为强制步骤，但未经真实环境冒烟。

@@ -1,18 +1,33 @@
 # portfolio-watch — an Alva Agent Skill
 
-Say **"watch my crypto portfolio and alert me when something big happens"** —
-get a live, alert-enabled Alva Playbook: hourly-refreshed holdings, σ-scaled
-novelty-gated alerts, explicit staleness, private-by-default sharing with a
-data-layer share-safe mode.
+Say **"keep an eye on my NVDA, TSLA, and AAPL, ping me when something big
+happens"** — or the same about your Binance account — and get a live,
+alert-enabled Alva Playbook: session-aware refresh, σ-scaled novelty-gated
+alerts, explicit staleness, private-by-default sharing with a data-layer
+share-safe mode. Stocks, crypto, or both; a connected account, a declared
+holdings list, or just tickers.
 
 This repo is my submission for Alva's PM take-home: *build a Portfolio Watch
 Skill that lets any user generate a Playbook with a UI and alerts.*
 
-## Proof it works — live demo
+## Proof it works — two live builds from one skill
 
-Built on the real platform by this skill's flow, from one sentence to a
-published watch in **33 minutes and 3 user interactions** (the sentence, one
-blocking question, one share-safe release confirmation):
+**Equity watchlist demo — the assignment's literal sentence** ("keep an eye
+on my NVDA, TSLA, and AAPL, ping me when something big happens"; no account,
+no quantities → bare-watchlist mode, zero blocking questions):
+
+- **Public demo** (canonical link):
+  <https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo>
+- Market-hours cron, close-run σ anchor on 20 *trading* days, gap-judged-once,
+  volume-at-close, a real earnings-day alert (NVDA reported the day the demo
+  was built), portfolio tier **visibly off** — no fabricated NAV — and alert
+  digests carrying an **Open Playbook deep-link button**. Per-gate evidence in
+  [`demo-evidence-equity/`](demo-evidence-equity/).
+
+![equity watchlist demo](demo-evidence-equity/14-released-page-screenshot.png)
+
+**Crypto portfolio demo** — built earlier by the same skill's flow, from one
+sentence to a published watch in **33 minutes and 3 user interactions**:
 
 - **Share-safe public demo** (canonical link):
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo-safe>
@@ -23,8 +38,6 @@ blocking question, one share-safe release confirmation):
   false alert**), the four alert-delivery gates verified one by one, and **one
   test alert delivered exactly once** (`alva alert history`: a single `sent`
   row across two triggers — the novelty gate ate the second).
-
-![share-safe demo](demo-evidence/29-safe-released-screenshot.png)
 
 ## Install & use
 
@@ -58,13 +71,15 @@ the product), **the page is alive** (feed-bound, staleness never disguised).
 | Round | Scenarios | With skill | Without skill | Notes |
 |---|---|---|---|---|
 | Iteration 1 | 5 | 27/27 | 15/27 (56%) | [report](evals/iteration-1-results.md) |
-| Iteration 2 (v2 skill, tightened + 2 new scenarios) | 7 | **40/40** | 26/40 (65%) | [report](evals/iteration-2-results.md) · [benchmark](evals/iteration-2-benchmark.md) |
+| Iteration 2 (v2 skill, tightened + 2 new scenarios) | 7 | 40/40 | 26/40 (65%) | [report](evals/iteration-2-results.md) · [benchmark](evals/iteration-2-benchmark.md) |
+| Iteration 3 (v3 multi-asset, de-saturated + 2 new scenarios) | 9 | **63/63** | 42/63 (67%) | v2 baseline on the refactor-affected scenarios: 13/19 vs v3's 19/19 — [report](evals/iteration-3-results.md) |
 
 Assertions are decision-level (declared alert output? bounded history? dust
-bucketed? same-run share-safe? config-not-rebuild tune?), graded by
-independent agents, and were only ever tightened between rounds. Two new
-scenarios saturated — the graders' own critiques are queued as iteration-3
-tightenings in the report.
+bucketed? same-run share-safe? config-not-rebuild tune? zero-question
+watchlist build? market-closed ≠ stale?), graded by independent agents with
+evidence quotes, and were only ever tightened between rounds. The two
+scenarios that saturated in iteration 2 now discriminate (8/8 vs 7/8 and
+8/8 vs 5/8) — the queued tightenings worked as designed.
 
 Every platform call in the skill was calibrated against the real CLI/SDK —
 item-by-item table in [`calibration.md`](calibration.md); anything not
@@ -76,14 +91,18 @@ auth) are documented, not hidden — see `DESIGN.md` and `demo-evidence/e2e-log.
 
 | Path | What it is |
 |---|---|
-| `SKILL.md` | The skill: routing, dialect, defaults, workflow, hard gates |
-| `references/binance-portfolio.md` | Account truth, scope, symbol resolution, degradation ladder |
+| `SKILL.md` | The skill: routing, dialect, source resolution, defaults, workflow, hard gates |
+| `references/portfolio-source.md` | Source modes (account / declared / watchlist), degradation ladder, mixed portfolios |
+| `references/asset-equity.md` | Equity module: sessions, change semantics, gap/earnings/volume kinds |
+| `references/asset-crypto.md` | Crypto module: Binance scope, pair resolution, 24/7 cadence, depeg (formerly `binance-portfolio.md`) |
 | `references/feed-contract.md` | Feed schema (calibrated), time semantics, KV, bounded history |
-| `references/producer.md` | Producer template (calibrated), failure discipline, the LLM's cage |
+| `references/producer.md` | Producer template (calibrated), judgment windows, failure discipline, the LLM's cage |
 | `references/alerts.md` | Taxonomy, presets, novelty gate, delivery chain (four gates) |
-| `references/playbook-ui.md` | Layout contract, release chain, share-safe mechanics, remix |
+| `references/playbook-ui.md` | Layout contract (incl. watchlist variant), release chain, share-safe, remix |
+| `ONE-PAGER.md` / `ONE-PAGER.zh.md` | The thinking, on one page (EN / 中文) |
 | `calibration.md` | Skill vs. real platform, item by item (`calibration-raw/` = raw help tree) |
-| `demo/` | The live demo's producer + both playbook pages, as deployed |
-| `demo-evidence/` | Per-gate command outputs, screenshots, e2e log with timings |
-| `evals/` | Both eval rounds: prompts, assertions, results, benchmark |
+| `demo/` | The crypto demo's producer + both playbook pages, as deployed |
+| `demo-evidence/` | Crypto demo: per-gate command outputs, screenshots, e2e log |
+| `demo-evidence-equity/` | Equity demo: per-gate evidence for the assignment's literal sentence |
+| `evals/` | All three eval rounds: prompts, assertions, results, benchmarks |
 | `DESIGN.md` | 中文产品设计说明：判断、取舍、指标、实地裁决与踩坑记录 |

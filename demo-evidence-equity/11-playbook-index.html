@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Equity Watchlist Watch (Demo)</title>
+<link rel="stylesheet" href="https://alva-ai-static.b-cdn.net/design-system/v1/design-system.css" />
+<script src="https://unpkg.com/@alva-ai/toolkit/dist/browser.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  html { height: 100%; overflow: hidden; }
+  body { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--b0-page); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: var(--spacing-xxs);
+    font-size: 12px; line-height: 20px; color: var(--text-n7);
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: var(--radius-ct-max); background: var(--main-m3); }
+  .status-dot.partial { background: var(--chart-orange1-main); }
+  .status-dot.stale { background: var(--main-m4); }
+
+  .alert-item { padding: var(--spacing-m) 0; }
+  .alert-item + .alert-item { border-top: 0.5px solid var(--line-l12); }
+  .alert-head { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
+  .alert-sev {
+    font-size: 11px; letter-spacing: 0.11px; line-height: 18px;
+    padding: 0 var(--spacing-xs); border-radius: var(--radius-ct-min);
+    background: var(--grey-g1); color: var(--text-n7);
+  }
+  .alert-sev.critical { background: var(--main-m4-10); color: var(--main-m4); }
+  .alert-headline { font-size: 14px; line-height: 22px; color: var(--text-n9); }
+  .alert-time { font-size: 12px; color: var(--text-n5); }
+  .alert-detail { font-size: 12px; line-height: 20px; color: var(--text-n7); margin-top: var(--spacing-xxs); }
+
+  .method-body p, .method-body li { font-size: 13px; line-height: 22px; color: var(--text-n7); }
+  .method-body strong { font-weight: 500; color: var(--text-n9); }
+  .method-body ul { padding-left: var(--spacing-l); margin: var(--spacing-xs) 0; }
+
+  .dark-panel { opacity: 0.75; }
+  .dark-panel .method-body p { color: var(--text-n5); }
+</style>
+</head>
+<body>
+<div class="playbook-container">
+  <div class="widget-grid">
+
+    <!-- Watchlist header band: no NAV, no P&L — quantities were never given -->
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Watching</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">tickers on watch</div>
+        <div id="kpi-count" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Biggest Mover</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">vs prior close</div>
+        <div id="kpi-mover" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Next Earnings</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">soonest on the list</div>
+        <div id="kpi-earn" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Data Status</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-label">loading…</span></div>
+        <div id="status-asof" style="font-size:11px;color:var(--text-n5);margin-top:var(--spacing-xxs);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Performance since watch creation (rebased to 100) -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Performance Since Watching (rebased to 100)</span>
+        <span class="widget-timestamp" id="chart-asof"></span>
+      </div>
+      <div class="chart-body chart-dotted-background">
+        <div id="chart-perf" style="width:100%;height:320px;"></div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Watch table: no value/weight columns — no quantities exist -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Watchlist</span>
+        <span class="widget-timestamp">tickers only — no position sizes declared</span>
+      </div>
+      <div class="table-card" id="watch-table">
+        <div class="table-row table-header">
+          <div class="table-cell">Ticker</div>
+          <div class="table-cell">Price</div>
+          <div class="table-cell">Day</div>
+          <div class="table-cell">Gap</div>
+          <div class="table-cell">Vol vs 20d</div>
+          <div class="table-cell">Next Earnings</div>
+          <div class="table-cell">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert timeline -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Alert Timeline</span>
+        <span class="widget-timestamp">silence means nothing material happened</span>
+      </div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body" id="alert-list" style="width:100%;">
+          <div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">loading…</div></div>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Portfolio-level alerts: visibly dark, with the reason and the unlock -->
+    <div class="widget-card col-8 dark-panel">
+      <div class="widget-title"><span class="widget-title-text">Portfolio Alerts — Off</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p>Portfolio-level alerts (total value, drawdown, concentration) are
+          <strong>off</strong> because no position sizes were declared — this watch knows
+          <em>what</em> you hold, not <em>how much</em>. Nothing here is estimated or
+          assumed: an invented portfolio value would be a fabricated number wearing a
+          chart. To unlock the portfolio tier, tell the agent your share counts
+          ("I hold 20 NVDA") or connect an account — the watch upgrades in place,
+          no rebuild.</p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Method panel -->
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">Method</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p><strong>What this watches.</strong> A bare watchlist — NVDA, TSLA, AAPL — built from
+          one sentence, with no brokerage connection and no quantities. US equity prices
+          refresh every 30 minutes across the US trading session (pre-open through the
+          close, weekdays) from Alva's stock kline data; earnings dates come from the
+          earnings calendar. Every number on this page is read from the feed at view time.</p>
+          <p><strong>Alert rules in force</strong> (preset: <strong>normal</strong>) — alerts fire on
+          state changes, never on states, and repeats are suppressed by a novelty gate:</p>
+          <ul>
+            <li>Move vs prior close ≥ 3× that stock's own 20-trading-day volatility (critical at 6×)</li>
+            <li>Opening gap ≥ 2× its 20-day volatility — judged once, at the open</li>
+            <li>Day volume ≥ 3× its 20-day average — judged once, at the close (intraday volume extrapolation is noise)</li>
+            <li>Earnings within 3 days (one heads-up per report date)</li>
+            <li>Escalation re-alerts; recovery updates this page silently</li>
+          </ul>
+          <p><strong>Market-hours honesty.</strong> When the US market is closed the badge reads
+          <em>market closed</em>, not stale — a quiet weekend is by design. The cron window is
+          encoded in UTC, so around daylight-saving transitions the first/last run of the
+          day can shift by an hour; the session detector inside the script keeps judgments
+          aligned to actual trading bars.</p>
+          <p><strong>Known blind spots.</strong> News/materiality alerts are disabled in this demo
+          build; after-hours moves are caught at the next session's open-gap check rather
+          than in real time; the watchlist covers exactly the tickers declared — the owner
+          edits the list to change coverage; portfolio-tier analytics stay off until
+          quantities exist (see the panel above — nothing is assumed).</p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Required table-column algorithm from the design spec (reset → measure →
+  // resolve → apply). Run after every table render and on resize.
+  function initTableAlignment(tableEl) {
+    var rows = tableEl.querySelectorAll(".table-row");
+    if (rows.length === 0) return;
+    var colCount = rows[0].querySelectorAll(".table-cell").length;
+    rows.forEach(function (row) {
+      row.style.removeProperty("min-width");
+      var cells = row.querySelectorAll(".table-cell");
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].style.removeProperty("flex");
+        cells[i].style.removeProperty("min-width");
+        cells[i].style.removeProperty("width");
+      }
+    });
+    var colWidths = [];
+    for (var col = 0; col < colCount; col++) {
+      var maxW = 0;
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) maxW = Math.max(maxW, cell.scrollWidth);
+      });
+      colWidths.push(maxW);
+    }
+    var totalContent = 0;
+    for (var i = 0; i < colWidths.length; i++) totalContent += colWidths[i];
+    var gapTotal = (colCount - 1) * 16;
+    var available = tableEl.clientWidth - gapTotal;
+    var resolved = [];
+    for (var col = 0; col < colCount; col++) {
+      var proportional = Math.round((colWidths[col] / totalContent) * available);
+      resolved.push(Math.max(colWidths[col], proportional));
+    }
+    var totalWidth = gapTotal;
+    for (var col = 0; col < colCount; col++) {
+      totalWidth += resolved[col];
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) cell.style.flex = "0 0 " + resolved[col] + "px";
+      });
+    }
+    rows.forEach(function (row) { row.style.minWidth = totalWidth + "px"; });
+  }
+
+  var FEED = "/alva/home/lx79d/feeds/portfolio-watch-equity-demo/v1/data";
+  var CADENCE_MS = 30 * 60 * 1000; // 30-minute session cadence
+
+  function createAlvaClientConfig() {
+    var params = new URLSearchParams(window.location.search);
+    var pbsvToken = window.alva && window.alva.udf && window.alva.udf.getViewerToken
+      ? window.alva.udf.getViewerToken() : null;
+    var apiOrigin = params.get("api_origin");
+    var cfg = {};
+    if (pbsvToken) cfg.pbsvToken = pbsvToken;
+    if (apiOrigin) cfg.baseUrl = apiOrigin.replace(/\/$/, "");
+    return cfg;
+  }
+  function readFeed(path) {
+    var client = new AlvaToolkit.AlvaClient(createAlvaClientConfig());
+    return client.fs.read({ path: FEED + path });
+  }
+  // REST returns raw rows; grouped rows arrive as {date, items:[...]}. Flatten.
+  function flatten(rows) {
+    var out = [];
+    (rows || []).forEach(function (r) {
+      if (r && Array.isArray(r.items)) {
+        r.items.forEach(function (it) { out.push(Object.assign({ date: r.date }, it)); });
+      } else if (r) out.push(r);
+    });
+    return out;
+  }
+  function fmtUsd(v) {
+    if (v == null) return "—";
+    return "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  }
+  function fmtPct(v, signed) {
+    if (v == null) return "—";
+    var p = (v * 100).toFixed(Math.abs(v) < 0.001 ? 2 : 1) + "%";
+    return signed && v > 0 ? "+" + p : p;
+  }
+  function fmtTime(ms) {
+    if (!ms) return "—";
+    return new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  }
+
+  (async function () {
+    var pulseRows, posHist, alertRows;
+    try {
+      pulseRows = flatten(await readFeed("/portfolio_nav/series/@last/2"));
+      posHist = flatten(await readFeed("/positions/snapshot/@last/500"));
+      alertRows = flatten(await readFeed("/alerts/log/@last/20"));
+    } catch (e) {
+      document.getElementById("status-label").textContent = "feed read failed";
+      document.getElementById("status-dot").className = "status-dot stale";
+      return;
+    }
+    var pulse = pulseRows.length ? pulseRows[pulseRows.length - 1] : null;
+    // Latest snapshot batch = rows sharing the newest date
+    var lastDate = posHist.length ? posHist[posHist.length - 1].date : null;
+    var latestRows = posHist.filter(function (r) { return r.date === lastDate; });
+
+    // KPIs (watchlist band: count, biggest mover, next earnings — never NAV)
+    document.getElementById("kpi-count").textContent = latestRows.length || "—";
+    var movers = latestRows.filter(function (r) { return r.chg_day != null; });
+    if (movers.length) {
+      var top = movers.reduce(function (a, b) { return Math.abs(b.chg_day) > Math.abs(a.chg_day) ? b : a; });
+      var mv = document.getElementById("kpi-mover");
+      mv.textContent = top.asset + " " + fmtPct(top.chg_day, true);
+      mv.style.color = top.chg_day >= 0 ? "var(--main-m3)" : "var(--main-m4)";
+    }
+    var earns = latestRows.filter(function (r) { return r.days_to_earnings != null && r.days_to_earnings >= 0; })
+      .sort(function (a, b) { return a.days_to_earnings - b.days_to_earnings; });
+    if (earns.length) {
+      document.getElementById("kpi-earn").textContent =
+        earns[0].asset + " · " + (earns[0].days_to_earnings === 0 ? "today" : "in " + earns[0].days_to_earnings + "d");
+    } else {
+      document.getElementById("kpi-earn").textContent = "none in 30d";
+    }
+
+    // Market-aware freshness badge: closed is closed, never "stale"
+    if (pulse) {
+      var dot = document.getElementById("status-dot"), label = document.getElementById("status-label");
+      var age = Date.now() - pulse.date;
+      var degraded = (pulse.stale_count || 0) + (pulse.unpriced_count || 0);
+      if (pulse.market_state === "open" && age > 2 * CADENCE_MS) {
+        dot.className = "status-dot stale"; label.textContent = "stale — missed runs during the session";
+      } else if (degraded > 0) {
+        dot.className = "status-dot partial"; label.textContent = "partial — " + degraded + " ticker(s) degraded";
+      } else if (pulse.market_state === "open") {
+        dot.className = "status-dot"; label.textContent = "live · market open";
+      } else {
+        dot.className = "status-dot"; label.textContent = "market closed";
+      }
+      document.getElementById("status-asof").textContent = "as of " + fmtTime(pulse.date);
+      document.getElementById("chart-asof").textContent = "as of " + fmtTime(pulse.date);
+    }
+
+    // Performance chart: one rebased line per ticker (Canvas ⇒ raw hex)
+    var COLORS = { NVDA: "#49a3a6", TSLA: "#c2884f", AAPL: "#7a6fb0" };
+    var bySym = {};
+    posHist.forEach(function (r) {
+      if (r.perf_index == null) return;
+      (bySym[r.asset] = bySym[r.asset] || []).push([r.date, Math.round(r.perf_index * 100) / 100]);
+    });
+    var AX = {
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { fontSize: 10, color: "rgba(0,0,0,0.7)", margin: 8,
+        fontFamily: "'Delight', -apple-system, 'OPPO Sans 4.0', BlinkMacSystemFont, sans-serif" },
+      splitLine: { show: false },
+    };
+    var perfOption = {
+      grid: { top: 24, right: 4, bottom: 4, left: 4, containLabel: true },
+      tooltip: { trigger: "axis" },
+      legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 10,
+        textStyle: { fontSize: 10, color: "rgba(0,0,0,0.7)",
+          fontFamily: "'Delight', -apple-system, 'OPPO Sans 4.0', BlinkMacSystemFont, sans-serif" } },
+      xAxis: Object.assign({ type: "time", boundaryGap: false }, AX),
+      yAxis: Object.assign({ type: "value", scale: true }, AX),
+      series: Object.keys(bySym).map(function (sym) {
+        return { name: sym, type: "line", showSymbol: bySym[sym].length < 20, symbolSize: 4,
+          data: bySym[sym],
+          lineStyle: { color: COLORS[sym] || "#888", width: 2 },
+          itemStyle: { color: COLORS[sym] || "#888" } };
+      }),
+    };
+    var chart;
+    requestAnimationFrame(function () {
+      chart = echarts.init(document.getElementById("chart-perf"));
+      chart.setOption(perfOption);
+      chart.resize();
+    });
+    window.addEventListener("resize", function () {
+      if (chart) requestAnimationFrame(function () { chart.resize(); });
+    });
+
+    // Watch table (no value/weight columns)
+    var tbl = document.getElementById("watch-table");
+    latestRows.sort(function (a, b) { return Math.abs(b.chg_day || 0) - Math.abs(a.chg_day || 0); });
+    latestRows.forEach(function (r) {
+      var status = r.pricing === "carried" ? "carried price" :
+                   r.pricing === "unpriced" ? "unpriced" :
+                   (r.move_score != null && r.move_score >= 3) ? "⚡ unusual move" :
+                   (r.market_state === "open" ? "trading" : "closed");
+      var row = document.createElement("div");
+      row.className = "table-row table-body-row";
+      if (r.stale) row.style.opacity = "0.55";
+      row.innerHTML =
+        '<div class="table-cell">' + r.asset + "</div>" +
+        '<div class="table-cell">' + (r.price == null ? "—" : fmtUsd(r.price)) + "</div>" +
+        '<div class="table-cell ' + (r.chg_day == null ? "" : r.chg_day >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_day, true) + "</div>" +
+        '<div class="table-cell ' + (r.gap_pct == null ? "" : r.gap_pct >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.gap_pct, true) + "</div>" +
+        '<div class="table-cell">' + (r.vol_ratio == null ? "—" : r.vol_ratio.toFixed(1) + "×") + "</div>" +
+        '<div class="table-cell">' + (r.next_earnings || "—") + "</div>" +
+        '<div class="table-cell">' + status + "</div>";
+      tbl.appendChild(row);
+    });
+    if (typeof initTableAlignment === "function") {
+      initTableAlignment(tbl);
+      window.addEventListener("resize", function () { initTableAlignment(tbl); });
+    }
+
+    // Alert timeline (newest first)
+    var list = document.getElementById("alert-list");
+    list.innerHTML = "";
+    if (!alertRows.length) {
+      list.innerHTML = '<div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">No alerts yet — the watch has judged nothing material.</div></div>';
+    } else {
+      alertRows.slice().reverse().forEach(function (a) {
+        var item = document.createElement("div");
+        item.className = "alert-item";
+        item.innerHTML =
+          '<div class="alert-head">' +
+          '<span class="alert-sev ' + (a.severity === "critical" || a.severity === "action-needed" ? "critical" : "") + '">' + a.severity + "</span>" +
+          '<span class="alert-headline">' + a.headline + "</span>" +
+          '<span class="alert-time">' + fmtTime(a.date) + "</span></div>" +
+          '<div class="alert-detail">' + a.detail + "</div>";
+        list.appendChild(item);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

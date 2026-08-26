@@ -1,0 +1,29 @@
+════ delivery attempt diagnostics (2026-08-26) ════
+--- digest @count after attempt #2 (3 = earnings + test#1 + test#2-with-actions) ---
+3
+--- latest digest (actions attached) ---
+[
+  {
+    "date": 1787729802485,
+    "title": "Watchlist: 1 change",
+    "body": "[INFO] Test alert — delivery chain verification — Sent once to prove the pipeline; the novelty gate suppresses repeats.",
+    "actions": [
+      {
+        "type": "open_url",
+        "label": "Open Playbook",
+        "url": "https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo"
+      }
+    ]
+  }
+]
+--- runs ---
+25823638 2026-08-26T07:36:44.559057Z completed
+25821036 2026-08-26T07:26:37.657063Z completed
+25820778 2026-08-26T07:25:39.834079Z completed
+--- alert history (empty = fanout not firing; crypto automation delivered fine on 08-25) ---
+{
+  "feed_path": "/alva/home/lx79d/feeds/portfolio-watch-equity-demo",
+  "items": [],
+  "next_cursor": ""
+}
+--- routing diff vs working crypto automation: identical (see e2e-log) ---
