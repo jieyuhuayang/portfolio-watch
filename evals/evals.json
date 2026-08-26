@@ -16,8 +16,9 @@
         "Watch includes a Playbook UI spec whose numbers bind to the feed (no hardcoded values)",
         "Playbook/feed visibility is private by default",
         "Verification plan runs the producer manually at least twice before scheduling",
-        "Dust positions are bucketed and excluded from per-asset alerts",
-        "User reply states the applied defaults and expected alert volume / how to tune"
+        "Dust positions are bucketed and excluded from per-asset price/move alerts",
+        "User reply states the applied defaults and the expected alert volume for the chosen sensitivity",
+        "User reply explains how to tune sensitivity later without rebuilding"
       ]
     },
     {
@@ -43,9 +44,9 @@
       "files": [],
       "assertions": [
         "Quantifies the noise a literal flat 1% rule would produce before implementing",
-        "Offers volatility-scaled thresholds or sensitivity presets as the default",
+        "Ships volatility-scaled thresholds or a sensitivity preset as the implemented default; the literal flat 1%/hourly rule is NOT what gets built by default",
         "Separates material-change alerts from periodic value updates (digest is not the alert channel)",
-        "User autonomy preserved: the literal 1%/hourly option remains available as opt-in",
+        "User autonomy preserved: the literal 1%/hourly option remains available as an explicit opt-in after the tradeoff is explained",
         "Provides a live dashboard/Playbook as the always-current home for portfolio value",
         "Considers privacy of absolute values in pushed notification text"
       ]
@@ -54,13 +55,14 @@
       "id": 3,
       "name": "no-connection-degrade",
       "prompt": "Build me a portfolio watch dashboard with alerts.",
-      "context": "NO broker account connected. User has never provided any holdings. No existing portfolio watch.",
-      "expected_output": "Exactly one blocking question: connect Binance (preferred) or provide a manual holdings list; explains the tradeoff; does NOT fabricate holdings or build a fake dashboard with invented data",
+      "context": "NO broker account connected. User has never provided any holdings or tickers. No existing portfolio watch.",
+      "expected_output": "Exactly one blocking question offering three paths: connect an account (preferred), declare holdings (ticker + quantity), or name tickers to watch; explains the tradeoffs; does NOT fabricate holdings or build a fake dashboard with invented data",
       "files": [],
       "assertions": [
         "Builds nothing: no fabricated holdings, no fake dashboard artifacts",
-        "Asks exactly one blocking question offering both connect-Binance and manual-holdings paths",
-        "Explains the tradeoff between the two paths honestly"
+        "Asks exactly one blocking question offering the source paths: connect an account, declare a holdings list, or name tickers to watch",
+        "Explains the tradeoffs between the offered paths honestly (live truth vs user-maintained staleness vs per-asset-only coverage)",
+        "Does not offer a demo/sample dashboard built on fabricated data as one of the options"
       ]
     },
     {
@@ -86,14 +88,17 @@
       "name": "agent-schedule-routing",
       "prompt": "come back every Monday and re-evaluate my allocation, tell me if my thesis still holds",
       "context": "Binance connected. Same balances as eval 0. An existing portfolio-watch feed + automation + private playbook already exist for this user.",
-      "expected_output": "Routes to an Agent Schedule (recurring agent re-judgment), not a deterministic Automation; no new feed/producer pipeline built; captures the thesis/allocation baseline to compare against; weekly Monday cadence",
+      "expected_output": "Routes to an Agent Schedule (recurring agent re-judgment), not a deterministic Automation; preflights what already exists before creating anything; no new feed/producer pipeline built; captures the thesis/allocation baseline to compare against; the recurring instruction includes a data-staleness/validity gate; weekly Monday cadence; the existing watch is left untouched",
       "files": [],
       "assertions": [
         "Routes the recurring re-evaluation to an Agent Schedule (agent re-reasons each run), not a deterministic Automation/cron script",
         "Does not build a new feed/producer/automation pipeline for the re-evaluation task",
         "Articulates the dividing line: deterministic script re-runs vs agent re-judgment",
         "Captures or asks for the thesis/allocation baseline that future runs will compare against",
-        "Schedule cadence matches the request (weekly, Monday)"
+        "Schedule cadence matches the request (weekly, Monday)",
+        "Preflights existing deployments/schedules for this user before creating anything new",
+        "Makes no unrequested changes to the existing portfolio watch (it keeps running unchanged)",
+        "The recurring instruction includes a staleness/validity gate: check that the watch's data is fresh before re-judging, rather than reasoning over stale numbers"
       ]
     },
     {
@@ -101,14 +106,52 @@
       "name": "tune-too-chatty",
       "prompt": "my watch is too chatty, calm it down",
       "context": "An existing portfolio watch (feed + hourly automation + private playbook) is running on the 'normal' sensitivity preset. Alert history shows 6 alerts in the past week. Binance connected, same balances as eval 0.",
-      "expected_output": "Tune route: switches preset toward calm / adjusts config on the existing automation; no rebuild, no duplicate watch, no republish for a config-only change; does not mute or pause the watch; reports expected new alert volume and how to revert",
+      "expected_output": "Tune route: switches preset toward calm / adjusts config on the existing automation; no rebuild, no duplicate watch, no republish for a config-only change; does not mute or pause the watch; reads the actual current config rather than assuming it; keeps all watched assets in scope; reports expected new alert volume and how to revert",
       "files": [],
       "assertions": [
         "Tune route: modifies the existing watch's configuration; creates no new watch/feed/automation",
         "Reduces noise via sensitivity config (e.g. normal to calm), not by pausing the automation or unbinding/muting alerts entirely",
         "Does not rebuild the pipeline or republish the automation for a config-only change",
         "Reports the expected alert volume after the change and how to revert or go further",
-        "States that data refresh and playbook updates continue unchanged (quiet is not paused)"
+        "States that data refresh and playbook updates continue unchanged (quiet is not paused)",
+        "Makes no unrequested monitoring-scope narrowing: every currently watched asset keeps its coverage",
+        "States the config-vs-republish criterion explicitly (source/config edits take effect next run; republish only for registration changes)",
+        "Reads or asks for the watch's actual current configuration rather than inventing its current threshold values"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "watchlist-equities-literal",
+      "prompt": "keep an eye on my NVDA, TSLA, and AAPL, ping me when something big happens.",
+      "context": "No broker or exchange account connected. User has never provided quantities or holdings. No existing portfolio watch.",
+      "expected_output": "Builds a bare-watchlist watch immediately with zero blocking questions: NVDA/TSLA/AAPL resolved as US equities priced via freshly discovered equity endpoints; market-hours-aware cadence with close-run sigma anchor and open-gap semantics; equity alert kinds (sigma-scaled move on trading-day sigma, gap, earnings proximity/result, volume anomaly, material news); portfolio-level alerts visibly off with reason and upgrade path; no fabricated quantities/weights/NAV anywhere; watchlist UI variant; summary states defaults and expected alert volume",
+      "files": [],
+      "assertions": [
+        "Builds a watchlist watch immediately: tickers alone are treated as sufficient — the build is not blocked on account connection or quantities",
+        "Asks zero blocking questions; the quantity/connect upgrade path appears only as a non-blocking note in the final summary",
+        "Resolves NVDA/TSLA/AAPL as US equities and prices them through equity data endpoints via fresh discovery (not crypto pairs, not remembered API shapes)",
+        "Refresh cadence is market-hours-aware (weekday session cron with close-run and open-gap semantics), not a 24/7 hourly cadence borrowed from crypto; weekend/holiday silence is framed as market-closed, not staleness",
+        "Per-asset alerts are active with equity-appropriate kinds (volatility-scaled move on trading-day sigma, gap at open, earnings proximity/result, volume anomaly, material news); no crypto-only kinds (depeg/stablecoin) applied",
+        "Portfolio-level alerts (NAV drawdown, concentration) are explicitly off with the stated reason (no quantities) — not silently simulated via assumed or equal weights",
+        "No fabricated quantities, weights, entry prices, or portfolio values anywhere in feed, UI, or alert text; the UI is a watchlist variant (per-asset performance since watch creation, no NAV header)",
+        "Final summary states applied defaults, expected alert volume for the preset, and how to tune"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "mixed-portfolio-one-clock",
+      "prompt": "I hold 0.5 BTC and 120 shares of NVDA. Watch it all and tell me if anything major happens.",
+      "context": "No account connected. User has declared the two holdings above. No existing portfolio watch.",
+      "expected_output": "One watch covering both assets: single feed + producer + automation on the union cadence; unified USD NAV over both quantified positions with the USDT quote labeled; class-aware judgment on one clock (BTC 24/7, NVDA only in market hours with close/gap semantics, enforced inside the producer); class-correct alert kinds; per-asset sigma with the window unit correct per class; declared-holdings snapshot honestly labeled user-maintained with no fabricated cost basis; portfolio-level alerts active since quantities exist",
+      "files": [],
+      "assertions": [
+        "One watch: a single feed + producer + automation covers both assets — no parallel per-class pipelines and no second automation for the second asset class",
+        "Unified USD NAV computed over both quantified positions, with the crypto leg's USDT quote honestly labeled",
+        "Class-aware judgment on one clock: BTC judged every run 24/7, NVDA judged only within US market hours with close/gap semantics — enforced inside the producer, not with a second cron",
+        "Alert kinds are class-correct: equity kinds (gap/earnings/volume/sigma move) for NVDA, crypto kinds for BTC; no depeg or stablecoin logic applied to NVDA",
+        "Sigma thresholds computed per asset from that asset's own history, with the window unit correct per class (trading days for NVDA, calendar days for BTC)",
+        "Declared-holdings mode handled honestly: snapshot labeled as user-maintained (\"as declared on <date>\"), no fabricated cost basis; period/since-watching P&L instead",
+        "Portfolio-level alerts (drawdown bands, concentration) active, since quantities exist for all positions"
       ]
     }
   ]
