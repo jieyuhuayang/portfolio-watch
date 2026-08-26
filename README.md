@@ -16,23 +16,35 @@ The three demos span the skill's whole input range — a connected account, a
 bare watchlist, and a declared book with targets — which is the reusability
 claim made concrete.
 
-**Showcase: concentrated-book risk watch** (fictional persona — an NVIDIA
-employee, RSU-heavy: 800 NVDA / 200 TSM / 100 QQQ / 0.8 BTC / $40k cash with
-targets; declared-holdings mode, zero blocking questions):
+**Showcase: A-share concentrated-book risk watch** (fictional persona — an
+A-share investor heavy in Zhongji Innolight 中际旭创: 3,000×300308.SZ (~64%),
+optical-module peers 新易盛/天孚通信, Moutai as the non-AI control, ¥660k
+cash, self-declared targets 50/10/10/5/25; declared-holdings mode, zero
+blocking questions):
 
 - **Public showcase** (canonical link):
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
-- First-principles risk view: **effective bets** (5 positions ≈ 3.3
-  independent bets at 0.73 avg correlation), per-stock **β/residual vs the
-  owner's own QQQ benchmark**, correlated co-moves collapsed into **one**
-  systematic alert, drift bands on the owner's own targets, every alert
-  naming the decision it informs. And a **12-month deterministic rule replay
-  rendered on the page** — 31 alert-days out of 250 (~2.6/month, quiet 88%
-  of days) — which caught band-edge oscillation (58 alert-days) before
-  launch; hysteresis re-arm was added *because the replay falsified the
-  first design*. Evidence in [`demo-evidence-showcase/`](demo-evidence-showcase/).
+- First-principles risk view: **effective bets 1.6 of 4** (the concentration
+  is correlation, not just position size — sector corr 0.83), per-stock
+  **β/residual against a sector leave-one-out benchmark** (no A-share index
+  data on the platform — disclosed, not papered over), correlated co-moves
+  collapsed into one sector alert, drift bands on the owner's own targets.
+- **A-share semantics as first-class product**: ±20%/±10% price limits are
+  critical alerts (a limit day is a liquidity event under T+1);
+  **corporate-action detection on un-adjusted prices** (a "−33.9% day" is
+  physically impossible trading → ex-div/split, auto-silenced, stats
+  neutralized); lunch-break sessions handled data-driven; CST has no DST so
+  the cron window never drifts.
+- The **12-month replay rendered on the page falsified the design twice**
+  before launch: band-edge oscillation → hysteresis re-arm, and ex-div days
+  masquerading as limit-down crashes → corporate-action handling. After both
+  fixes: 49 alert-days / 250 (~4.1/month, quiet 80% of days) — including a
+  **real −20% drawdown episode** that survives the cleaning: the persona's
+  fear, confirmed by history, alerted band by band. Evidence in
+  [`demo-evidence-ashare/`](demo-evidence-ashare/) (the earlier NVDA-persona
+  build is preserved in [`demo-evidence-showcase/`](demo-evidence-showcase/)).
 
-![showcase](demo-evidence-showcase/13-released-page-screenshot.png)
+![showcase](demo-evidence-ashare/14-released-page-screenshot.png)
 
 
 
@@ -129,6 +141,7 @@ auth) are documented, not hidden — see `DESIGN.md` and `demo-evidence/e2e-log.
 | `demo/` | The crypto demo's producer + both playbook pages, as deployed |
 | `demo-evidence/` | Crypto demo: per-gate command outputs, screenshots, e2e log |
 | `demo-evidence-equity/` | Equity demo: per-gate evidence for the assignment's literal sentence |
-| `demo-evidence-showcase/` | Showcase demo: exposure rules, replay v1→v2, per-gate evidence |
+| `demo-evidence-ashare/` | A-share showcase: sector residuals, price-limit/corporate-action semantics, replay double-falsification |
+| `demo-evidence-showcase/` | Earlier NVDA-persona showcase build (superseded, preserved as evidence) |
 | `evals/` | All four eval rounds: prompts, assertions, results, benchmarks |
 | `DESIGN.md` | 中文产品设计说明：判断、取舍、指标、实地裁决与踩坑记录 |

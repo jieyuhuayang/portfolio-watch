@@ -6,9 +6,10 @@
 NVDA, TSLA, and AAPL, ping me when something big happens"（题目原句）或
 "watch my Binance portfolio"，都能得到一个真实运行的 Playbook——会话感知
 刷新的界面 + σ 标定、novelty 门控、带深链按钮的告警管线。它在真实 Alva
-平台端到端跑通了**两次**：crypto 组合（33 分钟、3 次交互、告警一次且仅
-一次送达）与美股 watchlist（题目原句、零阻塞问题、财报日真实告警、lint
-全绿发布）。资产无关核心 + equity/crypto 模块 + 三种来源模式（连账户 /
+平台端到端跑通了**三次**：crypto 组合（告警一次且仅一次送达）、美股
+watchlist（题目原句、零阻塞、财报日真实告警）、重仓中际旭创的 A 股
+showcase（涨跌停/除权语义、板块残差、页面内嵌 12 个月回放且两次证伪了
+自己的规则设计）。资产无关核心 + equity/crypto 模块 + 三种来源模式（连账户 /
 报持仓 / 只报 ticker），每个平台调用对照真实 CLI/SDK 校准。三轮行为评测：
 v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计核心是
 三个承诺：数字必须真实、沉默必须是信息、页面必须活着（ONE-PAGER.md）。
@@ -16,9 +17,10 @@ v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计
 ## 链接清单
 
 - 仓库：`portfolio-watch/`（git 历史按阶段组织，可直接公开）
-- **Showcase：重仓组合风险 watch（第一性原理演示，公开）**：
+- **Showcase：重仓中际旭创的 A 股风险 watch（第一性原理演示，公开）**：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
-  ——有效押注数、β/残差、系统性折叠、漂移带、页面内嵌 12 个月规则回放
+  ——有效押注数 1.6/4、板块 leave-one-out β/残差、系统性折叠、涨跌停与
+  除权语义、漂移带、页面内嵌 12 个月回放（两次证伪：滞回 + 除权识别）
 - **美股 watchlist demo（题目原句构建，公开）**：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo>
 - Crypto share-safe 公开 demo（canonical）：
@@ -26,7 +28,7 @@ v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计
 - Crypto 私有原版（owner 视角）：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo>
 - One-pager：`ONE-PAGER.md`（EN）/ `ONE-PAGER.zh.md`（中文）
-- 端到端证据：`demo-evidence/`（crypto）、`demo-evidence-equity/`（美股）
+- 端到端证据：`demo-evidence/`（crypto）、`demo-evidence-equity/`（美股）、`demo-evidence-ashare/`（A 股 showcase）
 - 真机校准表：`calibration.md`
 - 评测报告：`evals/iteration-{1,2,3}-results.md`
 - 产品设计说明（中文，深度版）：`DESIGN.md`

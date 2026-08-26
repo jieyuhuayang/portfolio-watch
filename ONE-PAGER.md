@@ -41,10 +41,12 @@ what quantities would unlock is a one-line upgrade note, never a prerequisite.
    windows inside the producer.
 5. **Rules must be falsifiable.** A deterministic 12-month replay of the
    alert rules is rendered on the page itself: which days would have
-   alerted, and was it quiet everywhere else. The replay already earned its
-   keep — it exposed band-edge oscillation (58 alert-days/year) before
-   launch, and hysteresis re-arm cut it to 31 (~2.6/month, quiet 88% of
-   days). "Silence is information" is measured, not asserted.
+   alerted, and was it quiet everywhere else. The replay falsified the
+   design **twice** before launch — band-edge oscillation (fixed with
+   hysteresis re-arm) and, on the A-share book, ex-dividend days on
+   un-adjusted prices masquerading as "−33.9% limit-down crashes" (fixed
+   with corporate-action detection + stat neutralization). "Silence is
+   information" is measured, not asserted.
 
 ## Evidence
 
@@ -56,9 +58,11 @@ what quantities would unlock is a one-line upgrade note, never a prerequisite.
 - **Three live builds from one skill, spanning its whole input range**: a
   connected-account crypto watch (share-safe public mirror; delivered alert
   proven), the brief's literal sentence as a bare watchlist (real
-  earnings-day alert, deep-link buttons), and the concentrated-book showcase
-  (effective bets 3.3/4 at 0.73 correlation, β/residual columns, live replay
-  panel). All lint-clean, all live-read, all released.
+  earnings-day alert, deep-link buttons), and the A-share concentrated-book
+  showcase (effective bets 1.6/4 at 0.83 sector correlation, sector
+  leave-one-out β/residual, price-limit and corporate-action semantics,
+  live replay panel with a real −20% drawdown episode). All lint-clean,
+  all live-read, all released.
 
 ## Metrics and next
 

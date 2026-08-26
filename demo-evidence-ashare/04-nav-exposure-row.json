@@ -1,0 +1,16 @@
+[
+  {
+    "nav_cny": 3995340,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "cash_ratio": 0.16519244920332188,
+    "top_weight": 0.6389193410323026,
+    "eff_bets": 1.6464683951685528,
+    "avg_corr": 0.8341812445597198,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "date": 1787733800976,
+    "market_state": "closed",
+    "run_kind": "offsession"
+  }
+]

@@ -10,10 +10,35 @@ and half of this module is the consequences of that one fact.
 - **First-class**: US-listed equities and ETFs. This covers the dominant
   case and the deepest data coverage.
 - **Best-effort**: non-US listings via dotted-suffix tickers (`0700.HK`,
-  `7203.T`) through the same kline data skills where covered — coverage is
-  narrower (especially intraday), so label it honestly per instrument
+  `300308.SZ`) through the non-US kline data skill where covered — coverage
+  is narrower (especially intraday), so label it honestly per instrument
   rather than pretending parity. If a listing cannot be priced reliably,
   it is `unpriced`: shown, excluded from NAV, never alerted on.
+- **China A-shares** (`.SZ`/`.SS`, verified live) get their own semantics:
+  - **Price limits are a first-class alert** (`limit_hit`, critical):
+    ChiNext/STAR (300xxx/688xxx) ±20%, main board ±10%. Under T+1 a limit
+    day is a liquidity event — the holder cannot react until tomorrow.
+  - **Un-adjusted prices make ex-dividend/split days look like crashes.**
+    A "move" beyond the daily limit +2pp is physically impossible as
+    trading — classify it `corporate_action`: one info note (telling the
+    owner to update share counts — splits change them), suppress that
+    name's price alerts that day, pause portfolio-tier judgment (NAV is
+    briefly wrong), and neutralize the day's return (0) in rolling
+    σ/β/correlation so one ex-div day doesn't poison every threshold.
+    Neutralize rather than drop: dropping breaks cross-symbol alignment
+    for β and correlation.
+  - Sessions: 09:30–11:30 / 13:00–15:00 CST with a lunch break — the
+    data-driven session detector handles it with no clock math, and CST
+    has **no DST**, so the UTC cron window never drifts (contrast the US
+    module's DST caveat). Quote currency CNY, labeled.
+  - The US earnings calendar does not cover A-shares — the earnings kind
+    is dark there; say so in the method panel.
+  - **No index/ETF data on the platform for A-shares** (verified): when the
+    user's book is a sector cluster, compute β/residual against the
+    **leave-one-out mean of the held cluster** (each name's benchmark = the
+    equal-weight average of its peers) and say plainly it is a sector
+    benchmark, not a market one. For a sector-concentrated holder, "is it
+    the sector or the stock" is the decomposition that matters anyway.
 - **ADRs**: a US ticker means the US-listed ADR; note the underlying in the
   method panel so the user knows which line they're watching.
 

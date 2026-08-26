@@ -1,0 +1,15 @@
+[
+  {
+    "date": 1787733558510,
+    "days_evaluated": 250,
+    "alert_days": 49,
+    "systematic_days": 0,
+    "resid_days": 12,
+    "limit_days": 1,
+    "drift_days": 8,
+    "drawdown_days": 20,
+    "per_month": 4.1,
+    "window": "last 250 trading days",
+    "assumptions": "NAV chain-linked from neutralized returns (ex-div price moves are not P&L; dividends not modeled); corporate-action days (|ret|>limit+2pp, un-adjusted prices) neutralized in rolling stats and exempt from price alerts; share counts fixed at today's declared holdings; close-run rules only (no intraday/gap); sector leave-one-out benchmark (no market index on platform); normal preset K=3; hysteresis re-arm (drift 1pp inside band; drawdown episodes, recovery <2.5%)"
+  }
+]

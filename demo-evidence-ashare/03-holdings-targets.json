@@ -1,0 +1,42 @@
+{
+  "holdings": [
+    {
+      "asset": "300308.SZ",
+      "name_zh": "中际旭创",
+      "class": "equity",
+      "qty": 3000
+    },
+    {
+      "asset": "300502.SZ",
+      "name_zh": "新易盛",
+      "class": "equity",
+      "qty": 1000
+    },
+    {
+      "asset": "300394.SZ",
+      "name_zh": "天孚通信",
+      "class": "equity",
+      "qty": 1000
+    },
+    {
+      "asset": "600519.SS",
+      "name_zh": "贵州茅台",
+      "class": "equity",
+      "qty": 100
+    },
+    {
+      "asset": "CASH",
+      "name_zh": "现金",
+      "class": "cash",
+      "qty": 660000
+    }
+  ],
+  "targets": {
+    "300308.SZ": 0.5,
+    "300502.SZ": 0.1,
+    "300394.SZ": 0.1,
+    "600519.SS": 0.05,
+    "CASH": 0.25
+  },
+  "declared_on": "2026-08-26"
+}
