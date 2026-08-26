@@ -97,6 +97,7 @@ the product), **the page is alive** (feed-bound, staleness never disguised).
 | Iteration 1 | 5 | 27/27 | 15/27 (56%) | [report](evals/iteration-1-results.md) |
 | Iteration 2 (v2 skill, tightened + 2 new scenarios) | 7 | 40/40 | 26/40 (65%) | [report](evals/iteration-2-results.md) · [benchmark](evals/iteration-2-benchmark.md) |
 | Iteration 3 (v3 multi-asset, de-saturated + 2 new scenarios) | 9 | **63/63** | 42/63 (67%) | v2 baseline on the refactor-affected scenarios: 13/19 vs v3's 19/19 — [report](evals/iteration-3-results.md) |
+| Iteration 4 (v4 exposure rules: new scenario + regression spot-checks) | 1 new + 2 regression | **8/8** new · 15/15 regression | 3/8 new | Baseline lacks β/residual and factor-event collapse entirely — [report](evals/iteration-4-results.md) |
 
 Assertions are decision-level (declared alert output? bounded history? dust
 bucketed? same-run share-safe? config-not-rebuild tune? zero-question
@@ -129,5 +130,5 @@ auth) are documented, not hidden — see `DESIGN.md` and `demo-evidence/e2e-log.
 | `demo-evidence/` | Crypto demo: per-gate command outputs, screenshots, e2e log |
 | `demo-evidence-equity/` | Equity demo: per-gate evidence for the assignment's literal sentence |
 | `demo-evidence-showcase/` | Showcase demo: exposure rules, replay v1→v2, per-gate evidence |
-| `evals/` | All three eval rounds: prompts, assertions, results, benchmarks |
+| `evals/` | All four eval rounds: prompts, assertions, results, benchmarks |
 | `DESIGN.md` | 中文产品设计说明：判断、取舍、指标、实地裁决与踩坑记录 |
