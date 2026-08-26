@@ -210,3 +210,13 @@ Run manually twice, minutes apart, and check:
 
 Only then schedule. A producer that has never been watched consuming its own
 history has not been tested — the second run is where state bugs live.
+
+**Optional but powerful: replay the rules (falsifiability).** The daily-close
+subset of the alert rules is a pure function of historical bars, so it can be
+replayed deterministically over the past year: evaluate the same thresholds
+day by day on daily klines and list the days that would have alerted. This is
+not a strategy backtest (no positions, no P&L simulation — so it does not
+route through the platform's trading engine); it is the measurable form of
+"silence is information": N alert-days out of ~250, each attributable to a
+real event, and quiet everywhere else. Write the replay summary to a regular
+feed output so the Playbook can render it live like everything else.

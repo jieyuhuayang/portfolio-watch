@@ -1,0 +1,188 @@
+[
+  {
+    "date": 1757462400000,
+    "day": "2025-09-10",
+    "kinds": "resid_move:NVDA",
+    "headline": "NVDA residual 3.8% (3.0× resid σ)"
+  },
+  {
+    "date": 1758585600001,
+    "day": "2025-09-23",
+    "kinds": "resid_move:TSM",
+    "headline": "TSM residual 4.7% (3.1× resid σ)"
+  },
+  {
+    "date": 1758758400002,
+    "day": "2025-09-25",
+    "kinds": "price_move:BTC",
+    "headline": "BTC -3.8% (3.8σ)"
+  },
+  {
+    "date": 1759276800003,
+    "day": "2025-10-01",
+    "kinds": "drift:QQQ,drift:CASH",
+    "headline": "QQQ 15.0% exited its 20±5pp band (under); CASH 9.9% exited its 15±5pp band (under)"
+  },
+  {
+    "date": 1760054400004,
+    "day": "2025-10-10",
+    "kinds": "systematic_move,price_move:BTC",
+    "headline": "complex moved together down (TSM 3.2σ, QQQ 6.5σ; corr 0.53); BTC -7.3% (4.0σ)"
+  },
+  {
+    "date": 1760313600005,
+    "day": "2025-10-13",
+    "kinds": "price_move:TSM",
+    "headline": "TSM 7.9% (3.1σ)"
+  },
+  {
+    "date": 1760659200006,
+    "day": "2025-10-17",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1762387200007,
+    "day": "2025-11-06",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1763424000008,
+    "day": "2025-11-18",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −10% (30d high, deepening)"
+  },
+  {
+    "date": 1767312000009,
+    "day": "2026-01-02",
+    "kinds": "resid_move:TSM",
+    "headline": "TSM residual 5.5% (4.2× resid σ)"
+  },
+  {
+    "date": 1768262400010,
+    "day": "2026-01-13",
+    "kinds": "price_move:BTC",
+    "headline": "BTC 4.5% (4.2σ)"
+  },
+  {
+    "date": 1768435200011,
+    "day": "2026-01-15",
+    "kinds": "resid_move:TSM,volume_anomaly:TSM",
+    "headline": "TSM residual 4.0% (3.2× resid σ); TSM volume 3.9×20d"
+  },
+  {
+    "date": 1768867200012,
+    "day": "2026-01-20",
+    "kinds": "price_move:QQQ",
+    "headline": "QQQ -2.1% (3.1σ)"
+  },
+  {
+    "date": 1770076800013,
+    "day": "2026-02-03",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1770249600014,
+    "day": "2026-02-05",
+    "kinds": "price_move:BTC,drawdown",
+    "headline": "BTC -14.0% (5.8σ); drawdown crossed −10% (30d high, deepening)"
+  },
+  {
+    "date": 1770336000015,
+    "day": "2026-02-06",
+    "kinds": "price_move:NVDA,resid_move:NVDA,price_move:BTC",
+    "headline": "NVDA 7.9% (4.0σ); NVDA residual 4.8% (3.3× resid σ); BTC 12.2% (3.3σ)"
+  },
+  {
+    "date": 1771891200016,
+    "day": "2026-02-24",
+    "kinds": "drift:TSM",
+    "headline": "TSM 20.1% exited its 15±5pp band (over)"
+  },
+  {
+    "date": 1772150400017,
+    "day": "2026-02-27",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1772582400018,
+    "day": "2026-03-04",
+    "kinds": "drift:BTC",
+    "headline": "BTC 15.4% exited its 10±5pp band (over)"
+  },
+  {
+    "date": 1776384000019,
+    "day": "2026-04-17",
+    "kinds": "drift:CASH",
+    "headline": "CASH 10.0% exited its 15±5pp band (under)"
+  },
+  {
+    "date": 1777507200020,
+    "day": "2026-04-30",
+    "kinds": "resid_move:NVDA",
+    "headline": "NVDA residual -6.0% (3.9× resid σ)"
+  },
+  {
+    "date": 1779408000021,
+    "day": "2026-05-22",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1780272000022,
+    "day": "2026-06-01",
+    "kinds": "resid_move:NVDA",
+    "headline": "NVDA residual 5.5% (3.3× resid σ)"
+  },
+  {
+    "date": 1780358400023,
+    "day": "2026-06-02",
+    "kinds": "price_move:BTC,drift:TSM",
+    "headline": "BTC -6.5% (4.6σ); TSM 20.5% exited its 15±5pp band (over)"
+  },
+  {
+    "date": 1780444800024,
+    "day": "2026-06-03",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1780617600025,
+    "day": "2026-06-05",
+    "kinds": "systematic_move",
+    "headline": "complex moved together down (TSM 3.0σ, QQQ 5.1σ; corr 0.67)"
+  },
+  {
+    "date": 1781049600026,
+    "day": "2026-06-10",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −10% (30d high, deepening)"
+  },
+  {
+    "date": 1784246400027,
+    "day": "2026-07-17",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1785110400028,
+    "day": "2026-07-27",
+    "kinds": "drawdown",
+    "headline": "drawdown crossed −5% (30d high)"
+  },
+  {
+    "date": 1787097600029,
+    "day": "2026-08-19",
+    "kinds": "price_move:BTC",
+    "headline": "BTC 7.1% (6.3σ)"
+  },
+  {
+    "date": 1787270400030,
+    "day": "2026-08-21",
+    "kinds": "price_move:BTC",
+    "headline": "BTC 7.3% (3.5σ)"
+  }
+]

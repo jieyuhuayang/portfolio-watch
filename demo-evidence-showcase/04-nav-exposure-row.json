@@ -1,0 +1,16 @@
+[
+  {
+    "nav_usd": 428071.448,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "cash_ratio": 0.09344234516664143,
+    "top_weight": 0.3980270134718259,
+    "eff_bets": 3.343908558440743,
+    "avg_corr": 0.7344052366181547,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "date": 1787731890155,
+    "market_state": "closed",
+    "run_kind": "offsession"
+  }
+]

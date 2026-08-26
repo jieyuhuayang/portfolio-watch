@@ -25,12 +25,38 @@ never on a stablecoin-heavy book — σ-scaling makes "unusual" mean unusual
 *for that asset*. The σ window unit is per class (trading days for equities,
 calendar days for crypto). Dust-bucket (`OTHER`) assets never fire Tier A.
 
+### Tier A′ — cross-sectional rules (v4; any book with ≥2 correlated risk assets)
+
+Risk lives in exposures, not tickers. When holdings are correlated (a
+tech-concentrated book, an AI complex), univariate σ rules mistake one
+factor event for N independent signals. Two rules fix this:
+
+| Kind | Fires when | Severity |
+|---|---|---|
+| `systematic_move` | ≥ half the held risk assets move ≥ K × their own σ in the same direction **and** their avg pairwise 60d correlation ≥ 0.5 → **one** portfolio-level alert; that run's per-name `price_move` candidates are absorbed into it | warning; critical at 2K |
+| `resid_move` | \|r_asset − β × r_benchmark\| ≥ K × that asset's 60d **residual** σ (`resid_score ≥ K`) | warning; critical at 2K |
+
+- Returns decompose into β (the market's move, expressed through the asset)
+  and residual (the asset's own news). A −3% day on a −3% benchmark day is
+  beta, not news; a −2.5σ residual on a flat benchmark **is** news even when
+  the raw move never crosses the raw-σ threshold. Where both a raw
+  `price_move` and a `resid_move` fire for the same asset, the residual one
+  carries the signal — send it, absorb the raw one.
+- β per asset from a rolling 60-trading-day regression against the
+  benchmark; benchmark = an index ETF the user already holds (their own
+  stated market), else the class default (`asset-equity.md` §4). β and
+  residual σ are cached like sigma baselines (KV, refreshed daily).
+- A `systematic_move` alert names the driver honestly: "your AI-complex
+  exposure moved together (β-driven); largest residual 0.4σ — no
+  single-name news."
+
 ### Tier B — portfolio events (`subject: portfolio`)
 
 | Kind | Fires when | Severity |
 |---|---|---|
 | `drawdown` | drawdown_30d **crosses a band edge** (bands: 5/10/15/20/30%) | warning; critical ≥ 15% |
-| `concentration` | top_weight crosses 40% (or 1.25× its 30d mean) | info |
+| `concentration` | top_weight crosses 40% (or 1.25× its 30d mean); with ≥3 positions, also when **effective bets** (1/Σw²) crosses below 2.0 — "you hold N names but fewer than two independent bets" | info |
+| `drift` | a position's weight exits its **target band** (target ± 5pp default) — only when the user declared targets | info |
 | `depeg` | any held stablecoin deviates > 1% from 1.00 for 2 consecutive runs (crypto only — owned by `asset-crypto.md`) | critical |
 
 Banded, not continuous: drawdown alerts fire on *entering* a band, so a
@@ -134,10 +160,14 @@ successful binding/config mutation.
   individually preserved in the `alerts/log` audit output
   (`feed-contract.md`).
 - Every alert text answers: **what** changed, **how much/severe**, **since
-  when**, on **what evidence** (with timestamp/source), and **where to look**
+  when**, on **what evidence** (with timestamp/source), **where to look**
   — attach the Playbook link as a declared action (`openUrlAction`; a bare
-  `url` field does not become a button). No alert says only "something
-  happened".
+  `url` field does not become a button) — and **which standing decision it
+  informs**: a rebalance band the user set, a thesis to re-check, a risk
+  limit approached. Information is only worth an interruption if it can
+  change an action. Name the user's own pre-declared decision point; never
+  issue a trade instruction — "NVDA breached your 45% band — rebalance
+  decision point" is the product's job, "sell NVDA" is not.
 - Absolute balance values stay out of notification text (push notifications
   land on lock screens); percentages carry the signal.
 - Stale or carried-price assets are excluded from rule evaluation entirely —

@@ -250,6 +250,13 @@ all of it:
 
 - Alert on **state changes, not states**. "BTC is down 12% from your entry"
   is an alert once — not every hour that it remains true.
+- **Exposure, not tickers.** Correlated holdings moving together are one
+  factor event, not N signals — collapse them into one portfolio-level
+  alert; the per-name voice belongs to **residual** moves (the asset's own
+  news after subtracting β × benchmark). See `alerts.md` Tier A′.
+- Every alert names the **standing decision it informs** (a band the user
+  set, a thesis to re-check, a risk limit) — never a trade instruction.
+  Information is only worth an interruption if it can change an action.
 - Severity may only re-alert **upward**. Escalation notifies; decay updates
   the page silently.
 - Every alert answers: what changed, how severe, since when, based on what

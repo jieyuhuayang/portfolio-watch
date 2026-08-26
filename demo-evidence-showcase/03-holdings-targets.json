@@ -1,0 +1,37 @@
+{
+  "holdings": [
+    {
+      "asset": "NVDA",
+      "class": "equity",
+      "qty": 800
+    },
+    {
+      "asset": "TSM",
+      "class": "equity",
+      "qty": 200
+    },
+    {
+      "asset": "QQQ",
+      "class": "equity",
+      "qty": 100
+    },
+    {
+      "asset": "BTC",
+      "class": "crypto",
+      "qty": 0.8
+    },
+    {
+      "asset": "CASH",
+      "class": "cash",
+      "qty": 40000
+    }
+  ],
+  "targets": {
+    "NVDA": 0.4,
+    "TSM": 0.15,
+    "QQQ": 0.2,
+    "BTC": 0.1,
+    "CASH": 0.15
+  },
+  "declared_on": "2026-08-26"
+}

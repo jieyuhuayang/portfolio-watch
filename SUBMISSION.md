@@ -16,6 +16,9 @@ v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计
 ## 链接清单
 
 - 仓库：`portfolio-watch/`（git 历史按阶段组织，可直接公开）
+- **Showcase：重仓组合风险 watch（第一性原理演示，公开）**：
+  <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
+  ——有效押注数、β/残差、系统性折叠、漂移带、页面内嵌 12 个月规则回放
 - **美股 watchlist demo（题目原句构建，公开）**：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo>
 - Crypto share-safe 公开 demo（canonical）：

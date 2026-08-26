@@ -30,8 +30,14 @@ three are buildable, and none of them is a lesser product:
 | Mode | User gives | NAV / Tier B alerts | P&L | Upkeep | UI variant |
 |---|---|---|---|---|---|
 | **Connected account** | access to a venue (Binance today) | yes | full (rung A/B) | none — live truth | full layout |
-| **Declared holdings** | tickers + quantities | yes | period / since-watching | user maintains the list | full layout, "as declared on <date>" banner |
+| **Declared holdings** | tickers + quantities (+ optional **target weights**) | yes; targets additionally unlock `drift` band alerts | period / since-watching | user maintains the list | full layout, "as declared on <date>" banner; exposure panel when targets exist |
 | **Bare watchlist** | tickers only | **no — visibly dark** | per-asset since-watching | none | watchlist layout (`playbook-ui.md`) |
+
+Target weights are the cleanest decision hook the user can hand the watch:
+a weight drifting out of *their own* band is unambiguous decision-relevant
+information, needing no judgment call from the product. Bands default to
+target ± 5pp; tuning is config, never code. Never invent targets the user
+didn't state — no targets means no drift alerts, said plainly.
 
 The bare watchlist is the assignment's literal case ("keep an eye on my
 NVDA, TSLA, and AAPL") and it is a **first-class mode, not a degraded rung**:
@@ -103,6 +109,13 @@ partial (transfers in, old trades beyond API limits).
   into one number.
 - `stable_ratio` and `depeg` are evaluated over the crypto sleeve only, and
   are null/absent when no crypto is held.
+- **Exposure, not tickers** (v4): with ≥2 correlated risk assets, compute
+  rolling pairwise correlations, per-asset β/residual vs the benchmark, and
+  **effective bets** (1/Σw²) — a five-name book can be 1.8 independent bets,
+  and that number, not the name count, is what a concentrated holder needs
+  to see. Cross-sectional alert rules live in `alerts.md` Tier A′; the
+  benchmark is an index the user already holds where possible (their own
+  stated market), else the class default.
 - Ambiguous symbols (a string that is both a crypto asset and an equity
   ticker) resolve by: (a) the user's context words ("stocks", "shares",
   "coins", "美股"), then (b) connected-account holdings, then (c) — only if

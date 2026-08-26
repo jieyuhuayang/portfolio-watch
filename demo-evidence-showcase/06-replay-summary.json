@@ -1,0 +1,14 @@
+[
+  {
+    "date": 1787731856779,
+    "days_evaluated": 250,
+    "alert_days": 31,
+    "systematic_days": 2,
+    "resid_days": 7,
+    "drift_days": 6,
+    "drawdown_days": 11,
+    "per_month": 2.6,
+    "window": "last 250 trading days",
+    "assumptions": "share counts fixed at today's declared holdings; close-run rules only (no intraday/gap/earnings); normal preset K=3; hysteresis re-arm (drift re-arms 1pp inside band; drawdown episodes, recovery <2.5%)"
+  }
+]

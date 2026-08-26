@@ -40,6 +40,12 @@ Top to bottom — order mirrors the ten-second scan:
 2. **Holdings table** (`positions`): asset, value, weight bar, 24h/7d change,
    move_score flag (⚡ when ≥ preset K). Default sort: weight. Stale rows
    visibly muted with a "carried price" marker. `OTHER` row expandable.
+   **Exposure variant (v4, when targets/β exist)**: add weight-vs-target
+   band bars, a residual column ("how much of today's move was this asset's
+   own"), and an exposure strip above the table — effective bets, avg
+   pairwise correlation, benchmark in use. The strip answers the question a
+   concentrated holder actually has: *how many independent bets am I really
+   running?*
 3. **NAV chart** (`portfolio_nav`): line + drawdown shading; alert markers on
    the dates they fired.
 4. **Alert timeline** (`alerts`): newest first — headline, severity chip,

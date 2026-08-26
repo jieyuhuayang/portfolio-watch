@@ -10,7 +10,31 @@ holdings list, or just tickers.
 This repo is my submission for Alva's PM take-home: *build a Portfolio Watch
 Skill that lets any user generate a Playbook with a UI and alerts.*
 
-## Proof it works — two live builds from one skill
+## Proof it works — three live builds from one skill
+
+The three demos span the skill's whole input range — a connected account, a
+bare watchlist, and a declared book with targets — which is the reusability
+claim made concrete.
+
+**Showcase: concentrated-book risk watch** (fictional persona — an NVIDIA
+employee, RSU-heavy: 800 NVDA / 200 TSM / 100 QQQ / 0.8 BTC / $40k cash with
+targets; declared-holdings mode, zero blocking questions):
+
+- **Public showcase** (canonical link):
+  <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
+- First-principles risk view: **effective bets** (5 positions ≈ 3.3
+  independent bets at 0.73 avg correlation), per-stock **β/residual vs the
+  owner's own QQQ benchmark**, correlated co-moves collapsed into **one**
+  systematic alert, drift bands on the owner's own targets, every alert
+  naming the decision it informs. And a **12-month deterministic rule replay
+  rendered on the page** — 31 alert-days out of 250 (~2.6/month, quiet 88%
+  of days) — which caught band-edge oscillation (58 alert-days) before
+  launch; hysteresis re-arm was added *because the replay falsified the
+  first design*. Evidence in [`demo-evidence-showcase/`](demo-evidence-showcase/).
+
+![showcase](demo-evidence-showcase/13-released-page-screenshot.png)
+
+
 
 **Equity watchlist demo — the assignment's literal sentence** ("keep an eye
 on my NVDA, TSLA, and AAPL, ping me when something big happens"; no account,
@@ -104,5 +128,6 @@ auth) are documented, not hidden — see `DESIGN.md` and `demo-evidence/e2e-log.
 | `demo/` | The crypto demo's producer + both playbook pages, as deployed |
 | `demo-evidence/` | Crypto demo: per-gate command outputs, screenshots, e2e log |
 | `demo-evidence-equity/` | Equity demo: per-gate evidence for the assignment's literal sentence |
+| `demo-evidence-showcase/` | Showcase demo: exposure rules, replay v1→v2, per-gate evidence |
 | `evals/` | All three eval rounds: prompts, assertions, results, benchmarks |
 | `DESIGN.md` | 中文产品设计说明：判断、取舍、指标、实地裁决与踩坑记录 |

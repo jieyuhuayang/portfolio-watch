@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Concentrated Book Risk Watch (Showcase)</title>
+<link rel="stylesheet" href="https://alva-ai-static.b-cdn.net/design-system/v1/design-system.css" />
+<script src="https://unpkg.com/@alva-ai/toolkit/dist/browser.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  html { height: 100%; overflow: hidden; }
+  body { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--b0-page); }
+  .status-pill { display: inline-flex; align-items: center; gap: var(--spacing-xxs);
+    font-size: 12px; line-height: 20px; color: var(--text-n7); }
+  .status-dot { width: 8px; height: 8px; border-radius: var(--radius-ct-max); background: var(--main-m3); }
+  .status-dot.partial { background: var(--chart-orange1-main); }
+  .status-dot.stale { background: var(--main-m4); }
+  .alert-item { padding: var(--spacing-m) 0; }
+  .alert-item + .alert-item { border-top: 0.5px solid var(--line-l12); }
+  .alert-head { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
+  .alert-sev { font-size: 11px; letter-spacing: 0.11px; line-height: 18px;
+    padding: 0 var(--spacing-xs); border-radius: var(--radius-ct-min);
+    background: var(--grey-g1); color: var(--text-n7); }
+  .alert-sev.critical { background: var(--main-m4-10); color: var(--main-m4); }
+  .alert-headline { font-size: 14px; line-height: 22px; color: var(--text-n9); }
+  .alert-time { font-size: 12px; color: var(--text-n5); }
+  .alert-detail { font-size: 12px; line-height: 20px; color: var(--text-n7); margin-top: var(--spacing-xxs); }
+  .method-body p, .method-body li { font-size: 13px; line-height: 22px; color: var(--text-n7); }
+  .method-body strong { font-weight: 500; color: var(--text-n9); }
+  .method-body ul { padding-left: var(--spacing-l); margin: var(--spacing-xs) 0; }
+  .band-track { position: relative; height: 8px; border-radius: var(--radius-ct-max);
+    background: var(--grey-g1); min-width: 120px; }
+  .band-zone { position: absolute; top: 0; height: 8px; background: var(--grey-g2);
+    border-radius: var(--radius-ct-max); }
+  .band-dot { position: absolute; top: -2px; width: 12px; height: 12px;
+    border-radius: var(--radius-ct-max); background: var(--main-m3); }
+  .band-dot.out { background: var(--chart-orange1-main); }
+</style>
+</head>
+<body>
+<div class="playbook-container">
+  <div class="widget-grid">
+
+    <!-- Exposure KPI band -->
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Portfolio Value</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">declared holdings · USD</div>
+        <div id="kpi-nav" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Effective Bets</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">independent bets (1/Σw²)</div>
+        <div id="kpi-bets" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Avg Correlation</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">equity pairs · 60d</div>
+        <div id="kpi-corr" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">Data Status</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-label">loading…</span></div>
+        <div id="status-asof" style="font-size:11px;color:var(--text-n5);margin-top:var(--spacing-xxs);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- NAV chart -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Portfolio Value &amp; Drawdown</span>
+        <span class="widget-timestamp" id="chart-asof"></span>
+      </div>
+      <div class="chart-body chart-dotted-background">
+        <div id="chart-nav" style="width:100%;height:300px;"></div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Positions with exposure columns -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Holdings vs Targets</span>
+        <span class="widget-timestamp" id="holdings-note">holdings as declared on 2026-08-26 · fictional showcase book</span>
+      </div>
+      <div class="table-card" id="pos-table">
+        <div class="table-row table-header">
+          <div class="table-cell">Asset</div>
+          <div class="table-cell">Value</div>
+          <div class="table-cell">Weight</div>
+          <div class="table-cell">Target band</div>
+          <div class="table-cell">Day</div>
+          <div class="table-cell">Residual</div>
+          <div class="table-cell">β</div>
+          <div class="table-cell">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert timeline -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">Alert Timeline</span>
+        <span class="widget-timestamp">silence means nothing material happened</span>
+      </div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body" id="alert-list" style="width:100%;">
+          <div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">loading…</div></div>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- 12-month rule replay -->
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">12-Month Rule Replay</span>
+        <span class="widget-timestamp">would this watch have earned your trust?</span>
+      </div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p id="replay-headline"><strong>Loading replay…</strong></p>
+          <div class="free-text-body" id="replay-list" style="width:100%;"></div>
+          <p id="replay-assumptions" style="font-size:11px;color:var(--text-n5);"></p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <!-- Method -->
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">Method</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p><strong>What this watches.</strong> A concentrated, declared book — 800 NVDA,
+          200 TSM, 100 QQQ, 0.8 BTC, $40k cash, with the owner's target weights
+          (40/15/20/10/15) — <em>a fictional showcase persona; quantities are
+          user-maintained, not read from an account</em>. Hourly refresh, 24/7 (the
+          crypto sleeve sets the clock); equity judgments happen only inside US
+          market sessions. Every number is read from the feed at view time.</p>
+          <p><strong>Risk lives in exposures, not tickers.</strong> Per-asset β and residual
+          are computed against QQQ — the benchmark the owner already holds. When the
+          correlated equity complex moves together, that is <strong>one</strong> factor event and
+          sends <strong>one</strong> portfolio alert; a single name only speaks when its
+          <em>residual</em> (its own move, market subtracted) is ≥ 3× its residual σ.
+          Effective bets (1/Σw²) tracks how many independent bets the book really
+          runs — five positions currently behave like ~3.3.</p>
+          <p><strong>Alert rules in force</strong> (preset: <strong>normal</strong>; every alert names the
+          standing decision it informs, never a trade instruction):</p>
+          <ul>
+            <li>Systematic move: ≥2 correlated equities ≥3σ same direction, avg corr ≥0.5 → one portfolio alert</li>
+            <li>Residual move ≥3× residual σ → "re-check this name's thesis"</li>
+            <li>Weight outside its target ± 5pp band → "rebalance decision point" (re-arms 1pp inside the band)</li>
+            <li>Drawdown bands −5/10/15/20/30% in episodes: entry and deepening notify, recovery re-arms silently</li>
+            <li>Effective bets &lt; 2.0 → diversification review; earnings within 3 days; close-run volume ≥3× 20d avg; BTC 24h ≥3σ and 1h fast moves</li>
+          </ul>
+          <p><strong>The replay found the noise first.</strong> The 12-month rule replay above
+          initially showed band-edge oscillation (58 alert-days); adding hysteresis
+          re-arm cut it to 31 (~2.6/month) before any user was ever pinged. That is
+          what the replay is for.</p>
+          <p><strong>Known blind spots.</strong> News/materiality alerts disabled in this build;
+          replay covers close-run rules only (no intraday/gap/earnings); holdings are
+          owner-maintained and drift with real trades until updated; single-benchmark
+          residuals (QQQ) — no multi-factor model, by design. Not investment advice.</p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function initTableAlignment(tableEl) {
+    var rows = tableEl.querySelectorAll(".table-row");
+    if (rows.length === 0) return;
+    var colCount = rows[0].querySelectorAll(".table-cell").length;
+    rows.forEach(function (row) {
+      row.style.removeProperty("min-width");
+      var cells = row.querySelectorAll(".table-cell");
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].style.removeProperty("flex");
+        cells[i].style.removeProperty("min-width");
+        cells[i].style.removeProperty("width");
+      }
+    });
+    var colWidths = [];
+    for (var col = 0; col < colCount; col++) {
+      var maxW = 0;
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) maxW = Math.max(maxW, cell.scrollWidth);
+      });
+      colWidths.push(maxW);
+    }
+    var totalContent = 0;
+    for (var i = 0; i < colWidths.length; i++) totalContent += colWidths[i];
+    var gapTotal = (colCount - 1) * 16;
+    var available = tableEl.clientWidth - gapTotal;
+    var resolved = [];
+    for (var col = 0; col < colCount; col++) {
+      var proportional = Math.round((colWidths[col] / totalContent) * available);
+      resolved.push(Math.max(colWidths[col], proportional));
+    }
+    var totalWidth = gapTotal;
+    for (var col = 0; col < colCount; col++) {
+      totalWidth += resolved[col];
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) cell.style.flex = "0 0 " + resolved[col] + "px";
+      });
+    }
+    rows.forEach(function (row) { row.style.minWidth = totalWidth + "px"; });
+  }
+
+  var FEED = "/alva/home/lx79d/feeds/portfolio-watch-showcase/v1/data";
+  var CADENCE_MS = 3600 * 1000;
+  var BAND = 0.05;
+
+  function createAlvaClientConfig() {
+    var params = new URLSearchParams(window.location.search);
+    var pbsvToken = window.alva && window.alva.udf && window.alva.udf.getViewerToken
+      ? window.alva.udf.getViewerToken() : null;
+    var apiOrigin = params.get("api_origin");
+    var cfg = {};
+    if (pbsvToken) cfg.pbsvToken = pbsvToken;
+    if (apiOrigin) cfg.baseUrl = apiOrigin.replace(/\/$/, "");
+    return cfg;
+  }
+  function readFeed(path) {
+    var client = new AlvaToolkit.AlvaClient(createAlvaClientConfig());
+    return client.fs.read({ path: FEED + path });
+  }
+  function flatten(rows) {
+    var out = [];
+    (rows || []).forEach(function (r) {
+      if (r && Array.isArray(r.items)) {
+        r.items.forEach(function (it) { out.push(Object.assign({ date: r.date }, it)); });
+      } else if (r) out.push(r);
+    });
+    return out;
+  }
+  function fmtUsd(v) {
+    if (v == null) return "—";
+    return "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: v >= 1000 ? 0 : 2 });
+  }
+  function fmtPct(v, signed) {
+    if (v == null) return "—";
+    var p = (v * 100).toFixed(Math.abs(v) < 0.001 ? 2 : 1) + "%";
+    return signed && v > 0 ? "+" + p : p;
+  }
+  function fmtTime(ms) {
+    if (!ms) return "—";
+    return new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  }
+
+  (async function () {
+    var navRows, posRows, alertRows, replaySum, replayRows;
+    try {
+      navRows = flatten(await readFeed("/portfolio_nav/series/@last/200"));
+      posRows = flatten(await readFeed("/positions/snapshot/@last/1"));
+      alertRows = flatten(await readFeed("/alerts/log/@last/20"));
+      replaySum = flatten(await readFeed("/replay/summary/@last/1"));
+      replayRows = flatten(await readFeed("/replay/log/@last/40"));
+    } catch (e) {
+      document.getElementById("status-label").textContent = "feed read failed";
+      document.getElementById("status-dot").className = "status-dot stale";
+      return;
+    }
+    var latest = navRows.length ? navRows[navRows.length - 1] : null;
+
+    if (latest) {
+      document.getElementById("kpi-nav").textContent = fmtUsd(latest.nav_usd);
+      document.getElementById("kpi-bets").textContent =
+        latest.eff_bets != null ? latest.eff_bets.toFixed(1) + " of " + 4 : "—";
+      document.getElementById("kpi-corr").textContent =
+        latest.avg_corr != null ? latest.avg_corr.toFixed(2) : "—";
+      var dot = document.getElementById("status-dot"), label = document.getElementById("status-label");
+      var age = Date.now() - latest.date;
+      var degraded = (latest.stale_count || 0) + (latest.unpriced_count || 0);
+      if (age > 2 * CADENCE_MS) { dot.className = "status-dot stale"; label.textContent = "stale — missed runs"; }
+      else if (degraded > 0) { dot.className = "status-dot partial"; label.textContent = "partial — " + degraded + " asset(s) degraded"; }
+      else if (latest.market_state === "closed") { dot.className = "status-dot"; label.textContent = "live · US market closed"; }
+      else { dot.className = "status-dot"; label.textContent = "live"; }
+      document.getElementById("status-asof").textContent = "as of " + fmtTime(latest.date);
+      document.getElementById("chart-asof").textContent = "as of " + fmtTime(latest.date);
+    }
+
+    // NAV chart (Canvas ⇒ raw hex)
+    var AX = { axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { fontSize: 10, color: "rgba(0,0,0,0.7)", margin: 8,
+        fontFamily: "'Delight', -apple-system, 'OPPO Sans 4.0', BlinkMacSystemFont, sans-serif" },
+      splitLine: { show: false } };
+    var chart;
+    var navOption = {
+      grid: { top: 4, right: 4, bottom: 4, left: 4, containLabel: true },
+      tooltip: { trigger: "axis" },
+      xAxis: Object.assign({ type: "time", boundaryGap: false }, AX),
+      yAxis: Object.assign({ type: "value", scale: true }, AX),
+      series: [{ type: "line", showSymbol: navRows.length < 20, symbolSize: 5,
+        data: navRows.map(function (r) { return [r.date, r.nav_usd == null ? null : Math.round(r.nav_usd)]; }),
+        lineStyle: { color: "#49a3a6", width: 2 }, itemStyle: { color: "#49a3a6" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: "rgba(73,163,166,0.18)" }, { offset: 1, color: "rgba(73,163,166,0)" }]) } }],
+    };
+    requestAnimationFrame(function () {
+      chart = echarts.init(document.getElementById("chart-nav"));
+      chart.setOption(navOption); chart.resize();
+    });
+    window.addEventListener("resize", function () { if (chart) requestAnimationFrame(function () { chart.resize(); }); });
+
+    // Positions table with target bands
+    var tbl = document.getElementById("pos-table");
+    posRows.sort(function (a, b) { return (b.weight || 0) - (a.weight || 0); });
+    posRows.forEach(function (r) {
+      var dev = r.target_weight != null && r.weight != null ? r.weight - r.target_weight : null;
+      var out = dev != null && Math.abs(dev) > BAND;
+      var status = r.pricing === "carried" ? "carried price" :
+                   r.pricing === "unpriced" ? "unpriced" :
+                   out ? "⚠ outside band" :
+                   (r.resid_score != null && r.resid_score >= 3) ? "⚡ own-news move" : "ok";
+      var bandCell = "—";
+      if (r.target_weight != null) {
+        bandCell = fmtPct(r.target_weight) + " ± 5pp" + (dev != null ? " (" + (dev > 0 ? "+" : "") + (dev * 100).toFixed(1) + "pp)" : "");
+      }
+      var row = document.createElement("div");
+      row.className = "table-row table-body-row";
+      if (r.stale) row.style.opacity = "0.55";
+      row.innerHTML =
+        '<div class="table-cell">' + r.asset + "</div>" +
+        '<div class="table-cell">' + fmtUsd(r.value_usd) + "</div>" +
+        '<div class="table-cell">' + fmtPct(r.weight) + "</div>" +
+        '<div class="table-cell' + (out ? " is-bearish" : "") + '">' + bandCell + "</div>" +
+        '<div class="table-cell ' + (r.chg_day == null ? "" : r.chg_day >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_day, true) + "</div>" +
+        '<div class="table-cell">' + (r.resid_chg == null ? "—" : fmtPct(r.resid_chg, true) + " (" + (r.resid_score != null ? r.resid_score.toFixed(1) + "σ" : "") + ")") + "</div>" +
+        '<div class="table-cell">' + (r.beta == null ? "—" : r.beta.toFixed(2)) + "</div>" +
+        '<div class="table-cell">' + status + "</div>";
+      tbl.appendChild(row);
+    });
+    initTableAlignment(tbl);
+    window.addEventListener("resize", function () { initTableAlignment(tbl); });
+
+    // Alert timeline
+    var list = document.getElementById("alert-list");
+    list.innerHTML = "";
+    if (!alertRows.length) {
+      list.innerHTML = '<div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">No alerts yet — the watch has judged nothing material.</div></div>';
+    } else {
+      alertRows.slice().reverse().forEach(function (a) {
+        var item = document.createElement("div");
+        item.className = "alert-item";
+        item.innerHTML =
+          '<div class="alert-head">' +
+          '<span class="alert-sev ' + (a.severity === "critical" || a.severity === "action-needed" ? "critical" : "") + '">' + a.severity + "</span>" +
+          '<span class="alert-headline">' + a.headline + "</span>" +
+          '<span class="alert-time">' + fmtTime(a.date) + "</span></div>" +
+          '<div class="alert-detail">' + a.detail + "</div>";
+        list.appendChild(item);
+      });
+    }
+
+    // Replay panel
+    var rs = replaySum.length ? replaySum[replaySum.length - 1] : null;
+    if (rs) {
+      var quietPct = ((1 - rs.alert_days / rs.days_evaluated) * 100).toFixed(0);
+      document.getElementById("replay-headline").innerHTML =
+        "<strong>" + rs.alert_days + " alert-days out of " + rs.days_evaluated +
+        " trading days (~" + rs.per_month + "/month) — quiet on " + quietPct + "% of days.</strong> " +
+        "Systematic " + rs.systematic_days + " · residual " + rs.resid_days +
+        " · drift " + rs.drift_days + " · drawdown " + rs.drawdown_days + ".";
+      document.getElementById("replay-assumptions").textContent = "Assumptions: " + rs.assumptions;
+    }
+    var rlist = document.getElementById("replay-list");
+    replayRows.slice().reverse().slice(0, 12).forEach(function (e) {
+      var item = document.createElement("div");
+      item.className = "alert-item";
+      item.innerHTML =
+        '<div class="alert-head"><span class="alert-sev">' + e.day + "</span>" +
+        '<span class="alert-headline" style="font-size:13px;">' + e.headline + "</span></div>";
+      rlist.appendChild(item);
+    });
+  })();
+</script>
+</body>
+</html>

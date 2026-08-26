@@ -65,6 +65,13 @@ unambiguous rest gets built.
   extended-hours data is covered by discovery; otherwise degrade to
   overnight-news-only with the gap check as the catch-all — and say which
   of the two the watch is doing in the method panel.
+- **β and residual (v4)**: per-asset β from a rolling regression of 60
+  trading-day daily returns against the benchmark (β = cov(r_i, r_b) /
+  var(r_b)); residual return = r_i − β·r_b; residual σ over the same
+  window. Benchmark = an index ETF the user holds (QQQ/SPY/etc. — their own
+  stated market), else **QQQ** for a tech-dominated book, **SPY** otherwise.
+  Cache β/residual-σ in KV beside the sigma baselines, refreshed daily.
+  Cross-sectional rules that consume these live in `alerts.md` Tier A′.
 
 ## 5. Equity alert kinds
 

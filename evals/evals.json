@@ -153,6 +153,24 @@
         "Declared-holdings mode handled honestly: snapshot labeled as user-maintained (\"as declared on <date>\"), no fabricated cost basis; period/since-watching P&L instead",
         "Portfolio-level alerts (drawdown bands, concentration) active, since quantities exist for all positions"
       ]
+    },
+    {
+      "id": 9,
+      "name": "concentrated-book-exposure",
+      "prompt": "I hold 800 NVDA (mostly vested RSUs), 200 TSM, 100 QQQ, 0.8 BTC and about $40k in cash. I'm worried I'm too concentrated in AI — watch my risk. Rough targets: 40% NVDA, 15% TSM, 20% QQQ, 10% BTC, 15% cash.",
+      "context": "No account connected. User has declared the holdings and target weights above. No existing portfolio watch.",
+      "expected_output": "One watch on one clock covering equities + ETF + crypto + cash; per-asset beta/residual vs the user's own held benchmark (QQQ); correlated cluster moves collapse to a single systematic portfolio alert; concentration measured as effective bets; target-weight drift bands drive rebalance-decision alerts; every alert names the standing decision it informs and never a trade instruction; exposure-view interface; honest data handling throughout",
+      "files": [],
+      "assertions": [
+        "One watch: a single feed + producer + automation covers equities, ETF, crypto and cash on one clock, built with zero blocking questions",
+        "Computes per-asset beta and residual moves against a benchmark, choosing the user's own held index ETF (QQQ) as the benchmark; per-name alerting keys on residual sigma, not only raw sigma",
+        "Correlated same-direction cluster moves collapse into a single portfolio-level systematic alert rather than N per-name pings",
+        "Concentration is measured with effective bets (1/sum of squared weights) in addition to top weight, and surfaced in the interface",
+        "The user's target weights drive drift-band alerts (target +/- band, config-tunable); no drift logic is invented beyond the targets the user stated",
+        "Every designed alert names the standing decision it informs (rebalance band, thesis check, risk limit) and none issues a trade instruction or buy/sell advice",
+        "Honest data handling: no fabricated cost basis; declared-holdings banner; cash/USDT labeling; stale data suppresses the affected asset's alerts",
+        "The interface includes an exposure view: weights vs target bands, effective bets, correlation context, and a per-asset residual column"
+      ]
     }
   ]
 }

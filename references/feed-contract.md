@@ -38,6 +38,10 @@ One row per held asset (plus one `OTHER` dust row), replaced each run.
 | `weight` | number | value / NAV, 0–1 |
 | `chg_1h` / `chg_24h` / `chg_7d` | number | fractional change of price |
 | `move_score` | number | 24h move ÷ 20d daily σ — "is this move unusual *for this asset*" |
+| `beta` | number | v4, additive, nullable — rolling 60d β vs the benchmark |
+| `resid_chg` | number | v4, additive, nullable — day return minus β × benchmark return |
+| `resid_score` | number | v4, additive, nullable — \|resid_chg\| ÷ 60d residual σ (the cross-sectional analogue of `move_score`) |
+| `target_weight` | number | v4, additive, nullable — user-declared target; null when no targets stated |
 | `pricing` | enum | `direct` \| `two_hop` \| `carried` \| `unpriced` |
 | `stale` | bool | true when `pricing = carried` (fetch failed, last value carried) |
 | `asof_price` | timestamp | **candle/tick time of the price**, not run time |
@@ -61,6 +65,8 @@ One row per run.
 | `unpriced_count` | int | assets excluded from NAV this run |
 | `stale_count` | int | assets carried this run |
 | `market_state` | enum | `open` \| `closed` \| `mixed` — additive in v3; nullable. Lets the badge say "market closed" instead of the page deriving (or worse, guessing) it |
+| `eff_bets` | number | v4, additive, nullable — effective bets, 1/Σw² over risk positions |
+| `avg_corr` | number | v4, additive, nullable — avg pairwise 60d correlation of risk positions |
 
 `unpriced_count` and `stale_count` are in the contract so the UI can honestly
 badge freshness without re-deriving it; `market_state` extends the same
@@ -101,7 +107,7 @@ alert timeline and the record of what the watch judged, delivered or not.
 |---|---|---|
 | `alert_id` | string | fingerprint (see below) — doubles as dedup key |
 | `subject` | string | `asset:BTC` \| `portfolio` \| `system` |
-| `kind` | string | `price_move` \| `drawdown` \| `concentration` \| `depeg` \| `news` \| `connection` \| `gap` \| `earnings_event` \| `volume_anomaly` (class-specific kinds per asset modules) |
+| `kind` | string | `price_move` \| `drawdown` \| `concentration` \| `depeg` \| `news` \| `connection` \| `gap` \| `earnings_event` \| `volume_anomaly` \| `resid_move` \| `systematic_move` \| `drift` (class/cross-sectional kinds per asset modules and `alerts.md` Tier A′) |
 | `state` | string | normalized current state, e.g. `drawdown_band:10-15` |
 | `severity` | enum | `info` \| `warning` \| `critical` \| `action-needed` |
 | `evidence_ts` | timestamp | time of the underlying evidence |
