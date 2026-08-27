@@ -35,12 +35,20 @@ blocking questions):
   physically impossible trading → ex-div/split, auto-silenced, stats
   neutralized); lunch-break sessions handled data-driven; CST has no DST so
   the cron window never drifts.
-- The **12-month replay rendered on the page falsified the design twice**
-  before launch: band-edge oscillation → hysteresis re-arm, and ex-div days
-  masquerading as limit-down crashes → corporate-action handling. After both
-  fixes: 49 alert-days / 250 (~4.1/month, quiet 80% of days) — including a
-  **real −20% drawdown episode** that survives the cleaning: the persona's
-  fear, confirmed by history, alerted band by band. Evidence in
+- The **12-month replay rendered on the page falsified the design three
+  times**: band-edge oscillation → hysteresis re-arm; ex-div days
+  masquerading as limit-down crashes → corporate-action handling; and then
+  the replay itself was falsified — an architecture experiment showed the
+  stand-alone replay's semantics had drifted from live (no novelty-gate
+  modeling; residuals judged only at replay's close-runs; live's gap rule
+  had no ex-div guard). Fix: **live, replay, and an offline 26-assertion
+  test suite now share one pure judgment module**
+  ([`demo-ashare/judgment.js`](demo-ashare/judgment.js)) — parity by
+  construction. Re-run on real data: **44 alert-days / 250 (~3.7/month,
+  quiet 82% of days)** vs the old replay's 49 — the 5-day gap is exactly
+  what the old replay promised but live would have suppressed. The **real
+  −20% drawdown episode** survives every correction: the persona's fear,
+  confirmed by history, alerted band by band. Evidence in
   [`demo-evidence-ashare/`](demo-evidence-ashare/) (the earlier NVDA-persona
   build is preserved in [`demo-evidence-showcase/`](demo-evidence-showcase/)).
 
@@ -138,6 +146,7 @@ auth) are documented, not hidden — see `DESIGN.md` and `demo-evidence/e2e-log.
 | `references/playbook-ui.md` | Layout contract (incl. watchlist variant), release chain, share-safe, remix |
 | `ONE-PAGER.md` / `ONE-PAGER.zh.md` | The thinking, on one page (EN / 中文) |
 | `calibration.md` | Skill vs. real platform, item by item (`calibration-raw/` = raw help tree) |
+| `demo-ashare/` | A-share showcase source of truth: shared judgment module (live = replay = tests), build script, 26-assertion offline suite |
 | `demo/` | The crypto demo's producer + both playbook pages, as deployed |
 | `demo-evidence/` | Crypto demo: per-gate command outputs, screenshots, e2e log |
 | `demo-evidence-equity/` | Equity demo: per-gate evidence for the assignment's literal sentence |

@@ -39,14 +39,17 @@ what quantities would unlock is a one-line upgrade note, never a prerequisite.
    equities (gap once at the open, volume only at the close, weekends read
    "market closed"); mixed books run on **one clock** with class judgment
    windows inside the producer.
-5. **Rules must be falsifiable.** A deterministic 12-month replay of the
-   alert rules is rendered on the page itself: which days would have
-   alerted, and was it quiet everywhere else. The replay falsified the
-   design **twice** before launch — band-edge oscillation (fixed with
-   hysteresis re-arm) and, on the A-share book, ex-dividend days on
-   un-adjusted prices masquerading as "−33.9% limit-down crashes" (fixed
-   with corporate-action detection + stat neutralization). "Silence is
-   information" is measured, not asserted.
+5. **Rules must be falsifiable — including the falsifier.** A deterministic
+   12-month replay of the alert rules is rendered on the page itself: which
+   days would have alerted, and was it quiet everywhere else. It falsified
+   the design **three times**: band-edge oscillation (fixed with hysteresis
+   re-arm); ex-dividend days on un-adjusted prices masquerading as "−33.9%
+   limit-down crashes" (fixed with corporate-action detection); and finally
+   the replay itself — its stand-alone implementation had drifted from live
+   semantics, so **live, replay, and a 26-assertion offline test suite now
+   execute one shared judgment module** (parity by construction; replay
+   re-run: 44 alert-days/250, quiet 82% of days). "Silence is information"
+   is measured, not asserted.
 
 ## Evidence
 

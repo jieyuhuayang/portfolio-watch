@@ -1,0 +1,10 @@
+{
+  "backup": "backup-deployed-index-pre-sharedengine.js byte-identical to frozen 01-producer-source.js before overwrite",
+  "run1": { "duration_ms": 4172, "credits_used": 0, "status": "completed" },
+  "run1_readback": { "nav_cny": 4062045, "eff_bets": 1.6488, "avg_corr": 0.8342, "run_kind": "rth", "market_state": "open",
+    "zhongji": { "price": 867.16, "beta": 0.8467, "resid_score": 0.2975, "weight": 0.6404, "pricing": "direct", "asof": "2026-08-27T05:30:00Z" },
+    "kv_fingerprints_preserved": ["asset:300308.SZ:drift", "asset:CASH:drift", "portfolio:concentration"] },
+  "run2": { "duration_ms": 8005, "credits_used": 0, "status": "completed",
+    "nav_continuity": [4062045, 4055882], "new_alert_rows": 0,
+    "note": "run 2 consumed run 1's history; novelty gate quiet across the redeploy — no spurious alert burst" }
+}

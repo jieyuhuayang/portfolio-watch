@@ -1,0 +1,12 @@
+{
+  "run": "alva run --local-file demo-ashare/dist/replay.js (2026-08-27, credits_used 0, 1933ms)",
+  "engine": "same judgeAshare() as the live producer — replay/live parity by construction",
+  "evaluated": 250,
+  "alert_days": 44,
+  "per_month": 3.7,
+  "quiet_share": 0.82,
+  "counts": { "systematic": 0, "resid": 8, "raw": 3, "limit": 1, "ca": 2, "volume": 2, "drift": 8, "drawdown": 20 },
+  "delta_vs_standalone_replay": "49 -> 44 alert-days: the previous stand-alone replay did not model the novelty-gate fingerprints, so it promised 5 alert-days the live producer would have suppressed; with the shared engine the replay now carries the gate (and the fixed re-arm/recovery fingerprint transitions), so the page's promise equals live behavior",
+  "ca_days_recognized": ["2026-06-09 新易盛 -22.6%", "2026-06-10 天孚通信 -33.9%"],
+  "drawdown_episode": "-5% (2026-06-05) -> -10% deeper -> new episode -5% (06-26) -> -15% -> -20% (07-17): the real -20% episode survives the parity correction"
+}
