@@ -65,6 +65,15 @@ Share link: <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
   重写：开头直接回答 persona 的三个问题，五条设计原则逐条**先讲人话、
   术语进括号**，告警表"服务的决策"列改为"帮你做的决定"。HTML 与判断
   逻辑无变化；公开页读回核验生效。本地副本 12-playbook-readme.md 已同步。
+- **v2.0.4 发布（2026-08-30，用户反馈第三轮）**：(a) description 改为
+  **编号列表 + 换行**排版——实测平台 description 渲染 Markdown（有序列表
+  正常显示，默认折叠 Show more）；(b) 页面"方法说明"整段重写为人话：
+  七段结构（盯谁的钱→风险多集中→板块 vs 个股→A 股规矩→何时提醒→历史
+  检验→做不到的），"风险的单位是敞口不是代码/簇内 leave-one-out/重新
+  武装"等 AI 味表述全部替换，术语先说事再进括号。lint 0/0/0；线上 HTML
+  与本地逐字节 diff 一致；判断逻辑无变化。副本 11-playbook-index.html
+  已同步。平台事实增量：**playbook description 支持 Markdown**；发布版
+  URL 不允许直接导航（PLAYBOOK_PAGE_NAVIGATION_DENIED，只能平台内嵌渲染）。
 - 页面读 `replay/summary/@last/1`（= 新 44 行）与 `replay/log/@last/40`
   （= 全部落在新批次内）——新旧回放批次在存储层并存可审计，页面显示
   无重复。
