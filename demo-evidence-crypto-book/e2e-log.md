@@ -41,7 +41,7 @@ language 显式配置修正）。
 - [x] Producer 手动跑两次；run 2 消费 run 1 历史（KV 延续、novelty 安静）
 - [x] 故障注入：unpriced/stale、告警抑制、不崩溃
 - [x] Automation 上线（每小时 cron）；发布自动首跑绿且安静
-- [x] Playbook v1.0.1 发布：lint 0/0/0、截图门过、README 如实、深链生效
+- [x] Playbook v1.0.2 发布：lint 0/0/0、截图门过、README 如实、深链生效、文案对齐 showcase 三轮教训
 - [x] 送达四门逐项验证（binding ACTIVE、routing → ch 5025；email 如实记录为 unavailable）
 - [ ] 送达 `sent` 行：待自然产生——同账户同机制已两度证明（crypto demo 08-25、
       equity 08-27 3×sent 对账一致），本 automation 不再消耗受控触发；

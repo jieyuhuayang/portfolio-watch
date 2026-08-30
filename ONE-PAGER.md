@@ -125,13 +125,14 @@ evidence from the live Alva platform.
 
 ## 4. After launch: how to measure it, and what's still missing
 
-**What counts as success** (a metric I defined for this product, not an
-existing platform metric): the core number is **weekly active watches
-that have not been muted**. The reasoning: users mute a watch before they
+**How to measure it**: one number worth watching is **weekly active
+watches that have not been muted** — users mute a watch before they
 abandon it, so "unmuted" reflects a change in trust earlier than "active"
-does. Two supporting numbers: alert open-rate (it deteriorates before the
-mute rate does), and the count of unsourced numbers (which must stay at
-zero).
+does. Alongside it, alert open-rate (it deteriorates before the mute rate
+does). And one hard line to hold: no number may ever appear on the page
+without a nameable data source — the iron rule from section 1, which
+after launch turns from a design principle into a quality check that must
+be run continuously.
 
 **Current boundaries** (stated plainly in the product): declared holdings
 don't yet support shorts or non-USD positions, and a declared list is
