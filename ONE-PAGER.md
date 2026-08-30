@@ -17,8 +17,12 @@ unfolds into three questions, which are the three parts of this page:
 
 ## 1. What to trust: portfolios vary endlessly, truth follows one rule
 
-For a portfolio the skill has never seen, only two things actually vary:
-**where the holdings come from**, and **what is in them**.
+First, what the generated Playbook actually is: a pipeline that runs on a
+schedule, and each run does four things — **fetch prices, compute metrics,
+judge whether anything is worth saying, then update the page and push a
+notification if needed**. For a portfolio the skill has never seen, only
+the pipeline's inputs vary: **where the holdings come from**, and **what
+is in them**.
 
 - **Three sources, all built on the spot**: a connected exchange account
   (truest data); holdings the user states (a pasted brokerage screenshot
@@ -26,15 +30,20 @@ For a portfolio the skill has never seen, only two things actually vary:
   get built with zero follow-up questions. Missing quantities just means
   no NAV or drawdown yet; the page says exactly what is missing, and "I
   hold 20 NVDA" unlocks it anytime.
-- **Asset classes are plug-ins**: US stocks, crypto, and A-shares each
-  bring their own sessions, quoting, and special events (earnings, gaps,
-  price limits, depegs), while the main line — fetch, judge, alert,
-  render — stays untouched. Supporting a new class means adding a module,
-  not reworking the product.
+- **Asset classes are plug-ins**: everything that differs between US
+  stocks, crypto, and A-shares comes down to two blocks — where prices
+  come from, and which class-specific events to judge (earnings, gaps,
+  price limits, depegs). Switching asset class swaps only those two
+  blocks; the pipeline's four steps stay untouched. So supporting a new
+  class means adding a module, not reworking the product.
 
-Above all of it sits one iron rule: every number on the page can name the
-endpoint and timestamp it came from. The AI never invents a number; if a
-price can't be fetched, the asset is marked stale and nothing fires.
+Whatever the source, one iron rule holds: **every number on the page comes
+from a real API call and carries its fetch time**. Three mechanisms
+enforce it: the page reads live data every time it opens, so no number is
+ever baked into the HTML; the AI only makes textual judgments (say,
+whether a news item matters) while every price, value, and P&L figure is
+fetched by code; and when a fetch fails, the asset is marked stale and its
+alerts are paused — bad data never gets a voice.
 
 ## 2. When to speak: only when it's worth it
 
@@ -78,48 +87,56 @@ digest, ordered by severity inside.
 lands on the relevant part of the page. The alert is the doorbell; the
 page is the full answer.
 
-## 3. Why believe it: every claim has a matching fact on the platform
+## 3. Why believe it: every design claim was tested against reality
 
-**The skill has produced three real Playbooks on Alva**, deliberately fed
-three completely different inputs: a connected-account crypto portfolio, a
-US-stock watchlist built from three bare tickers, and a declared A-share
-book concentrated in one name, with target weights and cash. All three are
-released and reading live data (links in SUBMISSION).
+The first two sections are design. This one answers a different question:
+has any of it been tested outside the document? Four claims, each with
+evidence from the live Alva platform.
 
-**What should ring rang; what shouldn't, didn't.** The day after NVDA's
-earnings, the US-stock watch sent three alerts — intraday move, escalation,
-close confirmation — each one traceable to a "delivered" receipt in the
-platform's records. Over the same stretch, the A-share watch ran 29 times
-and said nothing, because nothing happened.
+- **"It holds for any portfolio"** — three real Playbooks were built from
+  three completely different inputs: a connected-account crypto
+  portfolio, a US-stock watchlist made of three bare tickers, and a
+  declared A-share book concentrated in one name, with target weights and
+  cash. All three are released and reading live data (links in
+  SUBMISSION).
+- **"It only interrupts when it's worth it"** — verified by real markets
+  in both directions. It speaks: the day after NVDA's earnings, the
+  US-stock watch sent three alerts (intraday move, escalation, close
+  confirmation), each recorded as "delivered" in the platform's logs. It
+  stays quiet: over the same stretch, the A-share watch ran 29 times with
+  zero alerts, and indeed nothing material happened to that book. On top
+  of that, the page embeds a 12-month replay of the alert rules, which
+  exposed three design flaws in turn (re-alerting at band edges,
+  ex-dividend days on unadjusted prices misread as crashes, replay code
+  drifting from live behavior); after the fixes, live, replay, and the
+  offline tests share one judgment module.
+- **"Every number is real"** — each platform call the skill prescribes
+  was verified individually, and the skill's data model was compared
+  field by field against the platform's own first-party portfolio watch.
+  The comparison confirmed two design choices: tickers without quantities
+  are a proper input, not a broken one; and confirming delivery means
+  checking both whether the user switched it on and whether the channel
+  actually exists.
+- **"The AI will follow it"** — four rounds of behavioral evals, using
+  real user phrasings (including easy-to-fail cases like "just these
+  tickers, don't ask me back" and "this is too chatty") to grade every
+  decision the AI makes under this skill: 63 of 63 pass, against 42 for a
+  control group without the skill loaded.
 
-**The rules were caught wrong three times — by their own replay.** The page
-embeds a 12-month replay of the alert rules, and it exposed three design
-flaws in turn: re-alerting at band edges, ex-dividend days on unadjusted
-prices misread as crashes, and the replay code quietly drifting from live
-behavior. After the fixes, live, replay, and the offline tests share one
-judgment module. "Silence means nothing happened" is a measured number,
-not a slogan.
+## 4. After launch: how to measure it, and what's still missing
 
-**Every platform call was verified one by one**, including a
-field-by-field comparison with the platform's own first-party portfolio
-watch data model. The comparison confirmed two key choices: tickers
-without quantities are a proper input, not a broken one; and confirming
-delivery means checking two things — whether the user switched it on, and
-whether the channel actually exists.
+**What counts as success** (a metric I defined for this product, not an
+existing platform metric): the core number is **weekly active watches
+that have not been muted**. The reasoning: users mute a watch before they
+abandon it, so "unmuted" reflects a change in trust earlier than "active"
+does. Two supporting numbers: alert open-rate (it deteriorates before the
+mute rate does), and the count of unsourced numbers (which must stay at
+zero).
 
-**How well does the AI execute it? Tested four rounds.** Real user
-phrasings — including easy-to-fail ones like "just these tickers, don't
-ask me back" and "this is too chatty" — grade every decision the AI makes
-under this skill: 63 of 63 pass; the same questions without the skill
-loaded pass 42.
+**Current boundaries** (stated plainly in the product): declared holdings
+don't yet support shorts or non-USD positions, and a declared list is
+maintained by the user, so the page labels it "as declared on ‹date›".
 
-## 4. Boundaries and next
-
-The north-star metric is **weekly active watches that haven't been
-muted**: a muted watch is churn that just hasn't happened yet. Two
-boundaries are written plainly into the product: declared holdings don't
-yet support shorts or non-USD positions, and a declared list is maintained
-by the user, so the page labels it "as declared on ‹date›". Next, two
-things: a per-alert "useful / noise" button feeding back into thresholds,
-and futures/margin as a new module with its own liquidation-distance
-warnings.
+**Next, two things**: a one-tap "useful / noise" button on each alert,
+feeding back into thresholds; and futures/margin as a separate module
+with its own liquidation-distance warnings.
