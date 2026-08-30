@@ -74,6 +74,11 @@ Share link: <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
   与本地逐字节 diff 一致；判断逻辑无变化。副本 11-playbook-index.html
   已同步。平台事实增量：**playbook description 支持 Markdown**；发布版
   URL 不允许直接导航（PLAYBOOK_PAGE_NAVIGATION_DENIED，只能平台内嵌渲染）。
+- **v2.0.5 发布（2026-08-30，用户反馈第四轮）**：移除持仓表角标"持仓为
+  2026-08-26 申报 · 虚构演示账本"，页面保持整洁；申报日期并入方法说明
+  首段（"账本于 2026-08-26 申报"），虚构演示与免责声明保留在方法说明
+  结尾——诚实信息不丢，只是不再占表格视觉。lint 0/0/0；线上与本地
+  逐字节一致；判断逻辑无变化。副本已同步。
 - 页面读 `replay/summary/@last/1`（= 新 44 行）与 `replay/log/@last/40`
   （= 全部落在新批次内）——新旧回放批次在存储层并存可审计，页面显示
   无重复。
