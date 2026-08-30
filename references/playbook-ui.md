@@ -108,9 +108,14 @@ exists and what it does for its owner* — whose problem, what it watches
 for, when it speaks up — in plain words a non-quant understands. Never
 make it a feature list of techniques ("leave-one-out β/residual,
 hysteresis, effective bets…"): jargon belongs in the README's method
-section, each term introduced with its one-line explanation. Test: would
-the persona this page was built for understand their own page's opening
-line?
+section. When a term does appear there, attach it **in apposition** — the
+plain phrase does the work and the term rides along in parentheses:
+"跟着同业一起动的部分（β），和它自己独有的部分（残差）"、"约 1.6 只
+互不相关的股票（有效押注数 1/Σw²）". Never narrate the naming —
+"术语叫 X" / "这个指标叫 X" reads like a lesson for a novice, and the
+reader is an investor, not a student. Test: would the persona this page
+was built for understand their own page's opening line — without feeling
+talked down to?
 
 ## 4. Privacy and sharing
 
