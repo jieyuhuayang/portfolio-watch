@@ -12,9 +12,10 @@ loses money.
 So my approach was to write down the full standard for "what deserves to
 interrupt an investor" as a methodology an AI can execute strictly, make it
 hold for any portfolio, and make it checkable against historical data. The
-methodology has three layers, which structure this page: **facts** (where
-data comes from and how far to trust it), **judgment** (what deserves a
-notification), and **verification** (how the design is proven).
+methodology itself has two layers: **facts** (where data comes from and
+how far to trust it) and **judgment** (what deserves a notification).
+Section 3 shows how that design held up against reality; section 4 covers
+measurement and boundaries after launch.
 
 ## 1. Facts: portfolios vary endlessly, one rule governs the data
 
@@ -89,11 +90,13 @@ digest, ordered by severity inside.
 lands on the relevant part of the page. The alert is the doorbell; the
 page is the full answer.
 
-## 3. Verification: every design claim tested against reality
+## 3. Putting the design to the test
 
-The first two sections are design. This one answers a different question:
-has any of it been tested outside the document? Four claims, each with
-evidence from the live Alva platform.
+The first two sections are design. In this skill, verification is not a
+one-off step before delivery: the replay is printed on the page itself,
+and the acceptance checklist is built into the build process. This
+section gives the test results for the four design claims, all from the
+live Alva platform.
 
 - **"It holds for any portfolio"** — four real Playbooks were built from
   four completely different corners of the source-by-asset grid, all
