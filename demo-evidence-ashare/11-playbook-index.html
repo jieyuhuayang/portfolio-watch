@@ -285,11 +285,20 @@
       var dot = document.getElementById("status-dot"), label = document.getElementById("status-label");
       var age = Date.now() - latest.date;
       var degraded = (latest.stale_count || 0) + (latest.unpriced_count || 0);
-      if (latest.market_state === "open" && age > 2 * CADENCE_MS) {
+      // Staleness must be judged against the market state NOW, not the state
+      // recorded in the last data row — Friday's close run says "open" all
+      // weekend. CST has no DST, so a fixed +8 wall clock is exact; the
+      // 09:15–15:45 window covers the pre-open and close runs. Weekday
+      // holidays stay correct via the data path: the producer runs anyway
+      // and keeps age fresh.
+      var cst = new Date(Date.now() + 8 * 3600 * 1000);
+      var dow = cst.getUTCDay(), hm = cst.getUTCHours() * 100 + cst.getUTCMinutes();
+      var sessionNow = dow >= 1 && dow <= 5 && hm >= 915 && hm <= 1545;
+      if (sessionNow && age > 2 * CADENCE_MS) {
         dot.className = "status-dot stale"; label.textContent = "数据滞后 — 交易时段内缺运行";
       } else if (degraded > 0) {
         dot.className = "status-dot partial"; label.textContent = "部分降级 — " + degraded + " 个资产";
-      } else if (latest.market_state === "open") {
+      } else if (sessionNow && latest.market_state === "open") {
         dot.className = "status-dot"; label.textContent = "实时 · 交易时段";
       } else {
         dot.className = "status-dot"; label.textContent = "休市中（按设计安静）";

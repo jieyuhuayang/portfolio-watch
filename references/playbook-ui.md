@@ -34,9 +34,18 @@ Top to bottom — order mirrors the ten-second scan:
      `stale` (missed runs — banner with last successful run time).
    - The badge reads `stale_count`/timestamps/`market_state` from the Feed;
      the page never computes its own optimistic freshness. **Market-aware**:
-     when `market_state` is `closed`, the badge reads "as of <close time> ·
+     when the market is closed, the badge reads "as of <close time> ·
      market closed" and renders as `live` — a weekend must never display as
      `stale`, or the one badge that must stay meaningful goes numb.
+     **Judge "is the market open" against the clock NOW, never against the
+     `market_state` recorded in the last data row** — the producer stops
+     running when the market closes, so the final row of every week carries
+     an `open`-session stamp all weekend; a badge keyed on that row shows
+     "stale — missed runs" every Saturday (a live bug found and fixed this
+     way). Compute the session client-side from the market's wall clock and
+     flag staleness only when the session is open *now* and the data is
+     over-age; weekday holidays stay correct through the data path, because
+     the producer keeps running and keeps the age fresh.
 2. **Holdings table** (`positions`): asset, value, weight bar, 24h/7d change,
    move_score flag (⚡ when ≥ preset K). Default sort: weight. Stale rows
    visibly muted with a "carried price" marker. `OTHER` row expandable.
