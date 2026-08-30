@@ -1,0 +1,204 @@
+# Official portfolio_watch product-flow schema — extracted evidence
+# Source: read-only GraphQL introspection of the production gateway
+#   https://api-llm.prd.alva.ai/query  (captured 2026-08-30)
+# Full schema + capability map archived in the alva-research workspace
+#   (../alva-research/schema/alva-schema.graphql, introspection.json).
+# No mutations were executed against production; introspection is read-only.
+# Relevant screenshot-recognition mutations (from Mutation root):
+#   recognizePortfolioWatchScreenshot(file: Upload!): PortfolioWatchScreenshotRecognitionPayload!
+#   recognizePortfolioWatchScreenshotUrls(urls: [String!]!): PortfolioWatchScreenshotRecognitionPayload!
+# Shared-automation mutations (schedule / delivery / trigger):
+#   updateAutomationSchedule(input: { automationId, cronExpression, timezone })
+#   updateAutomationAlertDelivery(input: { automationId, alvaChannelIds, emailEnabled })
+#   triggerAutomation(input: { automationId })
+
+type Automation implements Node {
+  id: ID!
+  """
+  Canonical public owner (creator) of this user-facing automation. Nullable
+  during the backend rollout where owner_username may be empty — mirrors
+  Feed.owner.
+  """
+  owner: PublicUser
+  name: String!
+  description: String
+  status: AutomationStatus!
+  stats: AutomationStats!
+  """
+  Canonical feed entity backing this automation. Additive; existing
+  Automation scalar fields remain unchanged.
+  """
+  feed: Feed
+  """
+  Current live feed-major snapshot for this automation. Existing automation
+  fields remain unchanged while clients migrate to FeedMajor as the canonical
+  source/version edge.
+  """
+  currentMajor: FeedMajor!
+  """
+  Editable runtime prompt for the backing agent feed, assembled from the feed's
+  AGENTS.md in ALFS with product-flow migration fallback where needed.
+  """
+  userPrompt: String!
+  """
+  Runtime agent type from the backing feed major. Clients use this to decide
+  whether userPrompt is editable for the current automation.
+  """
+  agentType: String!
+  """
+  Canonical scheduled producer backing this automation. This direct edge lets
+  automation pages traverse to CronJob without round-tripping through feed.
+  """
+  producer: CronJob
+  schedule: AutomationSchedule!
+  viewerState: AutomationViewerState!
+  """
+  Current viewer's personal alert destinations for this Automation. Null for
+  anonymous viewers. Group-chat subscriptions managed through /alva subscribe
+  are intentionally excluded and may continue delivering independently.
+  """
+  alertDelivery: AutomationAlertDelivery
+  lastRun: AutomationRun
+  runs(input: AutomationRunConnectionInput): AutomationRunConnection!
+  lastRunAtMs: TimestampMs
+  totalRuns: Int!
+  """
+  Relay-style usage edge for new automation pages. Legacy usedBy and
+  usedByTotal remain unchanged for existing clients.
+  """
+  usedByConnection(input: AutomationUsageConnectionInput): AutomationUsageConnection!
+  usedBy: [AutomationUsage!]!
+  usedByTotal: Int!
+  """
+  Editable config when this automation is a backend-provisioned product flow
+  (currently fintwit_daily_digest and portfolio_watch), matched gateway-side by
+  feed name. Branch on the concrete type for per-flow settings. Null for
+  ordinary automations. New clients should read shared runtime fields from
+  Automation.userPrompt and Automation.schedule; legacy fields remain here for
+  existing clients during migration.
+  """
+  flowConfig: AutomationFlowConfig
+  """
+  Absolute ALFS path to the backing product-flow config file for caller-owned
+  product-flow automations. Null for ordinary automations and non-owned
+  product-flow automations.
+  """
+  flowConfigPath: String
+}
+
+type AutomationSchedule {
+  cronExpression: String!
+  "IANA timezone used to evaluate cronExpression with wall-clock semantics."
+  timezone: String!
+}
+
+type AutomationAlertDelivery {
+  isEnabled: Boolean!
+  alvaChannels: [Channel!]!
+  email: AutomationEmailDelivery!
+}
+
+type AutomationEmailDelivery {
+  """
+  Whether the viewer has configured email for this Automation. This can remain
+  true while the verified address is temporarily unavailable, allowing the
+  viewer to remove the stale preference without exposing the address.
+  """
+  isEnabled: Boolean!
+  "Whether identity currently resolves an eligible verified email."
+  isAvailable: Boolean!
+  """
+  The current viewer's complete verified account email. This owner-scoped
+  field is null when no eligible address is available.
+  """
+  address: String
+}
+
+type AutomationStats {
+  totalRuns: Int!
+  successfulRuns: Int
+  failedRuns: Int
+  lastRunStatus: String
+  lastRunAtMs: TimestampMs
+}
+
+interface AutomationFlowConfig {
+  "Backend flow registry id, e.g. \"fintwit_daily_digest\"."
+  flowId: String!
+  channelSessionId: ID!
+  updatedAtMs: TimestampMs!
+  """
+  Deprecated migration field. Read Automation.userPrompt for the shared runtime
+  prompt; this field remains for existing product-flow clients.
+  """
+  userPrompt: String
+}
+
+type PortfolioWatchFlowConfig implements AutomationFlowConfig {
+  flowId: String!
+  channelSessionId: ID!
+  updatedAtMs: TimestampMs!
+  userPrompt: String
+  "Portfolio source: \"connected\" (brokerage account) or \"manual\"."
+  portfolioSource: String!
+  """
+  Deprecated migration field. Read Automation.schedule.cronExpression for the
+  shared schedule; this field remains for existing portfolio-watch clients.
+  """
+  cronExpression: String!
+  "Deprecated migration field. Read Automation.schedule.timezone."
+  timezone: String!
+  language: String!
+  """
+  Connected brokerage account ids. Folds the backend account_id (singular) and
+  account_ids (plural) into one de-duplicated list; empty when the source is
+  manual.
+  """
+  accountIds: [String!]!
+  "Manually-entered positions; empty when the source is connected."
+  manualHoldings: [PortfolioWatchHolding!]!
+  "Manual cash balance; null when unset or the source is connected."
+  manualCash: Float
+}
+
+type PortfolioWatchHolding {
+  symbol: String!
+  "Position size. Null when the user tracks a symbol without a known size."
+  quantity: Float
+  side: String!
+  assetClass: String!
+  currency: String!
+}
+
+input PortfolioWatchHoldingInput {
+  symbol: String!
+  quantity: Float
+  side: String
+  assetClass: String
+  currency: String
+}
+
+input UpdatePortfolioWatchConfigInput {
+  automationId: ID!
+  "Portfolio source: \"connected\" or \"manual\". Omit to leave unchanged."
+  portfolioSource: String
+  "Replace the connected account ids. Omit to leave unchanged."
+  accountIds: [String!]
+  "Replace the manual holdings. Omit to leave unchanged."
+  manualHoldings: [PortfolioWatchHoldingInput!]
+  manualCash: Float
+  "Deprecated migration field. Prefer the shared automation config update path."
+  cronExpression: String
+  language: String
+  "Deprecated migration field. Prefer the shared automation userPrompt update path."
+  userPrompt: String
+}
+
+type PortfolioWatchScreenshotRecognitionPayload {
+  tickers: [PortfolioWatchRecognizedTicker!]!
+}
+
+type PortfolioWatchRecognizedTicker {
+  ticker: String!
+  quantity: Float
+}

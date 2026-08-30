@@ -22,6 +22,15 @@ Never sourced from: LLM memory, pasted screenshots of balances treated as
 live truth, or numbers synthesized "to fill a gap". If a value cannot be
 sourced, show the gap and say so.
 
+One refinement on screenshots (the platform's own portfolio_watch flow ships
+screenshot recognition for exactly this): a pasted brokerage screenshot is a
+legitimate **capture device for the declared-holdings list** — extract
+tickers and quantities, read the extracted list back for the user to
+confirm, then treat it as declared holdings like any typed list. What stays
+forbidden is using the screenshot's *values* (prices, balances, P&L) as live
+data; those numbers were true at screenshot time, prices still come from
+data skills at run time.
+
 ## 2. Three source modes
 
 A portfolio is identified by whichever of these the user gives you — all
@@ -30,7 +39,7 @@ three are buildable, and none of them is a lesser product:
 | Mode | User gives | NAV / Tier B alerts | P&L | Upkeep | UI variant |
 |---|---|---|---|---|---|
 | **Connected account** | access to a venue (Binance today) | yes | full (rung A/B) | none — live truth | full layout |
-| **Declared holdings** | tickers + quantities (+ optional **target weights**) | yes; targets additionally unlock `drift` band alerts | period / since-watching | user maintains the list | full layout, "as declared on <date>" banner; exposure panel when targets exist |
+| **Declared holdings** | tickers + quantities (+ optional **target weights**, **cash**) — typed, or captured from a brokerage screenshot (§1) | yes; targets additionally unlock `drift` band alerts | period / since-watching | user maintains the list | full layout, "as declared on <date>" banner; exposure panel when targets exist |
 | **Bare watchlist** | tickers only | **no — visibly dark** | per-asset since-watching | none | watchlist layout (`playbook-ui.md`) |
 
 Target weights are the cleanest decision hook the user can hand the watch:
@@ -58,6 +67,21 @@ NVDA, TSLA, and AAPL") and it is a **first-class mode, not a degraded rung**:
 - **Mode upgrades are config/data changes on the existing watch** — adding
   quantities or connecting an account later must never trigger a rebuild,
   for the same reason tuning a threshold never does.
+
+Two more declared-mode rules:
+
+- **Declared cash is a valid line.** If the user states a cash balance, it
+  counts in NAV and therefore dampens drawdown and every weight — a 50%-cash
+  book at −8% equity drawdown is not an −8% book. Cash itself never alerts
+  (no price, no move); it exists so the risk numbers are honest. Never
+  invent a cash line the user didn't state.
+- **Stated model boundary: long-only, USD/USDT-quoted.** The declared model
+  here does not take short positions (side inverts alert semantics — a drop
+  becomes good news) or per-holding foreign currency (needs an FX rate
+  source in the NAV path). If the user declares a short or a non-USD
+  holding, say the boundary plainly and watch the rest — don't silently
+  treat a short as a long or a HKD position as USD, either of which
+  fabricates the sign or size of their risk.
 
 ## 3. Degradation ladder
 

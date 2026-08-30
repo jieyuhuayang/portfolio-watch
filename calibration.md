@@ -112,3 +112,37 @@ as structural pseudocode and mandated fresh discovery — the calibration
 replaced pseudocode with verified shapes and corrected two secondhand claims
 (alpi `getApiKey`, alpi message direction) that came from the bot's
 corrections, not from the docs.
+
+## 11. Phase 5 — the platform's own portfolio_watch, read from the gateway schema (2026-08-30)
+
+A new, highest-authority source appeared: the production GraphQL gateway
+(`api-llm.prd.alva.ai/query`) has open introspection, and its schema contains
+a **backend-provisioned `portfolio_watch` product flow** — the platform's own
+first-party version of what this skill builds. Extracted SDL (with the
+original docstrings) is archived in
+`calibration-raw/gateway-portfolio-watch.graphql`; capture was read-only
+introspection, no mutations executed. This is stronger evidence than CLI help
+or docs: it is the shipped product's own data model.
+
+| Check | Official form (gateway SDL, docstrings verbatim) | Verdict |
+|---|---|---|
+| Source modes | `portfolioSource: "connected" (brokerage account) or "manual"`; `accountIds` when connected, `manualHoldings` when manual | ✅ the skill's three modes are a refinement of the same split — connected account = "connected"; declared holdings and bare watchlist are both "manual" |
+| Quantity-less tracking | `PortfolioWatchHolding.quantity: Float` — *"Null when the user tracks a symbol without a known size."* | ✅ **the platform's own model confirms the bare-watchlist stance verbatim**: tickers without quantities are a first-class holding row, not a degraded input |
+| Cash | `manualCash: Float` — *"Manual cash balance; null when unset"* | 🔧 declared cash added as an optional declared-holdings line (`portfolio-source.md` §2): counts in NAV and dampens drawdown/weights; never alerts |
+| Per-holding `side` / `currency` | `side: String!`, `currency: String!` on every holding | ⚠️ stated model boundary: this skill's declared mode is long-only and USD/USDT-quoted, now said explicitly in `portfolio-source.md` §2 rather than implied. Shorts invert alert semantics and per-holding FX adds a rate source — deliberate v-next, not an oversight |
+| Per-holding `assetClass` | `assetClass: String!` | ✅ the skill already classifies each symbol into its asset module before building |
+| Screenshot onboarding | `recognizePortfolioWatchScreenshot(file)` / `…Urls(urls)` → `{tickers: [{ticker, quantity}]}` | 🔧 a pasted brokerage screenshot is a legitimate *capture device for the declared list* (extract tickers+quantities, confirm back, prices still from data skills). The skill's "never treat screenshots as truth" rule was over-broad; refined in `portfolio-source.md` §1–2 — screenshot-as-declaration yes, screenshot-values-as-live-truth still never |
+| Schedule layering | flow-config `cronExpression`/`timezone`/`userPrompt` all carry *"Deprecated migration field. Read Automation.schedule / Automation.userPrompt"* | ✅ the platform migrated schedule+prompt **up to the shared automation layer**, leaving only domain data (source, holdings, language) in the product config — the same layering this skill already uses (cron on the deploy, judgment config in the feed) and the same reason Tune = config update, never rebuild |
+| Timezone | `AutomationSchedule.timezone` — *"IANA timezone used to evaluate cronExpression with wall-clock semantics."* | 🔧 upgrades `asset-equity.md` §3's `[unverified-live]` hedge: the platform models cron + IANA timezone with wall-clock (DST-correct) semantics at the automation layer; only the CLI flag surface remains to discover at build time |
+| Delivery two-state | `AutomationEmailDelivery.isEnabled` — *"can remain true while the verified address is temporarily unavailable"* — vs `isAvailable` — *"Whether identity currently resolves an eligible verified email."* | 🔧 the platform explicitly models **enabled ≠ available**. Gate 4 ("Routed") in `alerts.md` §4 and the DoD now check both: a destination can be switched on yet resolve to nothing (unverified email, unbound IM) and fail silently — the exact failure shape of a "configured but never delivered" watch |
+| Group-chat delivery | `alertDelivery` docstring: group-chat subscriptions via `/alva subscribe` are *"intentionally excluded and may continue delivering independently"* | ✅ matches the skill's binding note that personal delivery and group-channel delivery are separate facts to verify separately |
+| Report language | `language: String!` in the flow config | 🔧 report/alert language is recorded as explicit config at build time (SKILL.md §2), not re-inferred per run |
+| Judgment engine | `Automation.userPrompt` — *"assembled from the feed's AGENTS.md in ALFS"*; `agentType` decides editability | ⚠️ deliberate divergence, kept: the official flow re-reasons from a prompt each run (agent-type feed); this skill compiles judgment into a deterministic producer + shared judgment module. Cost: users edit config, not prose. Gain: replayable, falsifiable runs (DESIGN §15's three live/replay divergences were only findable *because* the judgment is deterministic). The skill's own Automation-vs-Agent-Schedule dividing line names the trade |
+| Run evidence | `AutomationStats.lastRunStatus` / `runs`; `triggerAutomation` mutation | ✅ run-history-green as DoD evidence, and trigger-is-production-semantics, both match §3's run-vs-trigger discipline |
+
+**Net effect on the skill:** two confirmations land verbatim from the
+platform's own docstrings (quantity-less holdings; enabled≠available), four
+small fixes (cash line, screenshot capture path, timezone hedge upgrade,
+explicit language config), two boundaries now stated instead of implied
+(long-only/USD; deterministic-vs-prompt judgment). No fabrications found in
+this phase either.

@@ -105,7 +105,10 @@ Run identity and source checks before writing any code:
    - **Neither** → this is your one blocking question. Offer three paths:
      connect an account (live truth, P&L, no upkeep), declare holdings
      (ticker + quantity, user-maintained — say so honestly), or just name
-     tickers to watch.
+     tickers to watch. A pasted brokerage screenshot counts as declaring
+     holdings: extract tickers + quantities, confirm the list back, and
+     treat it as a typed declaration (`references/portfolio-source.md` §1 —
+     the screenshot's *values* are never live data).
 3. An **empty portfolio is a valid state**, not an error. Build the watch
    anyway if asked; the Playbook shows an empty state and alerts activate when
    holdings appear.
@@ -125,6 +128,9 @@ Invariant across asset classes:
   parameter values).
 - **Dust**: positions worth < $10 *and* < 0.5% of NAV fold into an "Other"
   bucket (dust must not spam alerts).
+- **Language**: alerts, page copy, and README render in the language the
+  user asked in — recorded once as build config, not re-inferred per run
+  (a watch that flips language between runs reads as a different product).
 - **Visibility**: **as private as the account's tier allows.** A portfolio
   watch contains real wealth data. Private *released* playbooks are a
   paid-tier feature; on a free-tier account the honest choices are to stop at
@@ -288,7 +294,11 @@ Do not report success until every line is true:
          assume it, and remember that following a Playbook does **not**
          subscribe anyone to its alerts;
       4. the user's channel preference routes notifications to a real
-         destination (their chosen messaging channel or verified email).
+         destination — two checks, not one: the destination is *enabled*
+         (preference switched on) **and** *available* (a verified email or
+         bound IM channel actually resolves; `references/alerts.md` §4).
+         Enabled-but-unavailable passes every config read and delivers
+         nothing.
 - [ ] One test alert delivered — and only one (dedup verified) — checked
       *after* the four gates above, so a delivery failure points at the gate
       that broke instead of "alerts don't work". Delivery evidence is the

@@ -144,7 +144,14 @@ reason a user "never got the alert":
    must change (`--email-enabled` / `--alva-channel-ids`), never
    read-modify-write the whole resource. `channel_id=0` is the default
    personal destination; external DM follows the account's active IM
-   provider.
+   provider. Routed is **two facts, not one** — the platform's own delivery
+   model separates them (gateway `AutomationEmailDelivery`): *enabled*
+   ("the user switched this destination on") and *available* ("identity
+   currently resolves a real endpoint" — a verified email, a bound IM
+   channel). Enabled-but-unavailable is the silent failure shape: every
+   config read looks right, nothing ever arrives. Verify the endpoint
+   exists (verified email on the account, IM binding active), not just
+   that the preference is on.
 
 When debugging "no alert arrived", walk the chain in this order; when
 verifying done-ness, prove each link separately before the single test
