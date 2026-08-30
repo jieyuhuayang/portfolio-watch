@@ -18,6 +18,7 @@ language 显式配置修正）。
 | 10:1x | **四门逐项验证**：alertOutput 已声明 ✓ / push_notify ✓ / ACTIVE binding ✓ / routing isEnabled → ch 5025 ✓（email enabled=false available=false 如实记录：web 是唯一 *available* 通道——enabled≠available 两态检查即 phase5 校准落地） | 08, 09 |
 | 10:2x | Playbook：中文页面（快慢双车道列、稳定币行、目标带偏离、告警时间线空态文案）；lint **0/0/0**；draft（playbook 9003）；feed 公开（虚构 persona 账本，页面显著声明）；**v1.0.0 发布**；截图门通过（NAV/持仓/出带标记全部真实渲染） | 10–13 |
 | 10:2x | **v1.0.1 发布**：description 按 showcase v2.0.2 的归档教训改写为访客视角大白话（初衷 + 页面替你看的四件事 + "没消息就是好消息"）；config 写入 playbook 深链（digest 带"打开 Playbook"按钮）。页面 HTML 与判断逻辑无变化 | — |
+| 11:0x | **v1.0.2 发布（用户反馈：对齐 showcase v2.0.2→v2.0.4 全部三轮教训）**：(a) description 改**编号列表 + 换行**（平台渲染 Markdown），四条=集中度/大盘 vs 个币/计划偏离与亏损档/脱锚，收尾"没消息就是好消息"；(b) 页面方法说明按 showcase 七段结构人话重写（盯谁的钱→风险多集中→大盘 vs 个币→币圈规矩→何时提醒→测试钉死→做不到的），"快慢车道/方向状态制/σ 标定/episode/折叠/重武装"等裸术语全部替换为先说事+括号术语；(c) README 按 persona 三问 + 五条设计原则 + "帮你做的决定"规则表重写。lint 0/0/0；线上 HTML 与本地**逐字节一致**；截图核验新文案渲染；判断逻辑无变化 | 10–13 |
 
 ## 本 demo 独有的展示点
 
@@ -53,3 +54,15 @@ language 显式配置修正）。
 调度成本：24 runs/天 × 1 credit。
 
 Share link: <https://alva.ai/u/lx79d/playbooks/portfolio-watch-crypto-book>
+
+## v1.0.2 description 全文（存档，元数据不落盘）
+
+> 我重仓了 BTC，还有些 ETH、SOL 和一笔 USDT。币圈波动太快，我不想整天盯盘，
+> 但大事发生时要第一时间知道。这个页面每小时替我看一次，全年无休：
+>
+> 1. 风险有多集中——三个币基本同涨同跌，看似 3 个仓位实际只相当于约 2 个独立押注
+> 2. 大动的时候，是整个市场在动，还是某个币自己出事
+> 3. 仓位占比有没有偏离我定的计划、亏损到了哪一档
+> 4. 稳定币有没有脱锚迹象（连续两次确认才报，不被毛刺惊动）
+>
+> 没消息就是好消息：同一件事只报一次，恶化才追报，好转只默默更新页面。
