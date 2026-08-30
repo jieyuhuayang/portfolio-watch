@@ -68,10 +68,12 @@
 前两部分是设计。这一部分回答一个问题：这些设计有没有被现实检验过？四个
 主张，各有一份发生在真实 Alva 平台上的证据。
 
-- **"对任何持仓都成立"**——用三种完全不同的输入各构建了一个真实
-  Playbook：连账户的币组合、只报三个代码的美股 watchlist、重仓单只
-  A 股并带目标仓位和现金的申报账本。三个都发布在线上、页面实时读数
-  （链接见 SUBMISSION）。
+- **"对任何持仓都成立"**——沿"来源 × 资产"两个维度取了四个完全不同的
+  组合，各构建了一个真实 Playbook，全部发布在线上、页面实时读数：
+  [连账户的币组合](https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo-safe)、
+  [只报三个代码的美股 watchlist](https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo)、
+  [重仓单只 A 股并带目标仓位和现金的申报账本](https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase)、
+  [申报持仓的加密账本](https://alva.ai/u/lx79d/playbooks/portfolio-watch-crypto-book)。
 - **"只在值得的时候打扰"**——被真实行情从两个方向验证。会响：NVDA 财报
   次日，美股 watch 发出三条告警（盘中异动、异动升级、收盘确认），每条
   在平台送达记录中均为"已送达"。会安静：同一时期 A 股 watch 运行 29

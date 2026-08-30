@@ -10,6 +10,9 @@ holdings list, or just tickers.
 This repo is my submission for Alva's PM take-home: *build a Portfolio Watch
 Skill that lets any user generate a Playbook with a UI and alerts.*
 
+> **Start here → [做题思路一页纸（中文）](ONE-PAGER.zh.md) · [One-pager (EN)](ONE-PAGER.md)** — the
+> approach, the product decisions, and links to the four live demo Playbooks.
+
 ## Proof it works — three live builds from one skill
 
 The three demos span the skill's whole input range — a connected account, a

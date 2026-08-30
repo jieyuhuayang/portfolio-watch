@@ -93,12 +93,13 @@ The first two sections are design. This one answers a different question:
 has any of it been tested outside the document? Four claims, each with
 evidence from the live Alva platform.
 
-- **"It holds for any portfolio"** — three real Playbooks were built from
-  three completely different inputs: a connected-account crypto
-  portfolio, a US-stock watchlist made of three bare tickers, and a
-  declared A-share book concentrated in one name, with target weights and
-  cash. All three are released and reading live data (links in
-  SUBMISSION).
+- **"It holds for any portfolio"** — four real Playbooks were built from
+  four completely different corners of the source-by-asset grid, all
+  released and reading live data:
+  [a connected-account crypto portfolio](https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo-safe),
+  [a US-stock watchlist made of three bare tickers](https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo),
+  [a declared A-share book concentrated in one name, with target weights and cash](https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase),
+  and [a declared crypto book](https://alva.ai/u/lx79d/playbooks/portfolio-watch-crypto-book).
 - **"It only interrupts when it's worth it"** — verified by real markets
   in both directions. It speaks: the day after NVDA's earnings, the
   US-stock watch sent three alerts (intraday move, escalation, close
