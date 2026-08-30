@@ -140,10 +140,11 @@ without a nameable data source — the iron rule from section 1, which
 after launch turns from a design principle into a quality check that must
 be run continuously.
 
-**Current boundaries** (stated plainly in the product): declared holdings
-don't yet support shorts or non-USD positions, and a declared list is
-maintained by the user, so the page labels it "as declared on ‹date›".
+**Current boundaries**: declared holdings don't yet support shorts or
+non-USD positions, and a declared list is maintained by the user, so the
+page labels it "as declared on ‹date›". Both limits are stated right on
+the page.
 
-**Next, two things**: a one-tap "useful / noise" button on each alert,
-feeding back into thresholds; and futures/margin as a separate module
-with its own liquidation-distance warnings.
+**What's next**: a one-tap "useful / noise" button on each alert, to
+calibrate thresholds against real feedback; then a separate
+futures/margin module with liquidation-distance warnings.
