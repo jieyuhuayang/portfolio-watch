@@ -32,10 +32,16 @@ Persona（虚构，showcase 的现实上界输入）：*"我重仓了中际旭�
    真实用户被打扰之前修正了产品。
 4. 同一 skill 的第四种输入形态：A 股申报账本（CNY、目标带、板块簇）。
 
-## 开放项（与 equity/showcase demo 共享）
+## 开放项（与 equity/showcase demo 共享）——已闭环（2026-08-30 补记）
 
-新 automation 的送达 sent 行仍受平台侧 fanout 问题影响（见
-`demo-evidence-equity/15-delivery-diagnostics.txt`）；四门已逐项验证。
+~~新 automation 的送达 sent 行仍受平台侧 fanout 问题影响~~ → **08-27 已由
+真实行情闭环**：equity demo 的 NVDA 财报次日三条 digest 全部 fanout 成功
+（`status: "sent"` / `web`，见 `demo-evidence-equity/16-delivery-sent-rows.json`）。
+本 automation（27827）至今 **0 条 digest、0 条送达 —— 是真实的安静，不是
+送达失败**：29 次调度运行全绿、NAV 连续到周五收盘、`alerts/digest/@count = 0`
+（证据 `18-quiet-runs-delivery-state.jsonl`，2026-08-30 只读核验）。
+"沉默即信息"在真实行情下同时得到两个方向的验证：该响的响了（equity），
+不该响的没响（本 demo）。
 
 Share link: <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
 

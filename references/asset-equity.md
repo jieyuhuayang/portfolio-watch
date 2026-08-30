@@ -59,11 +59,14 @@ unambiguous rest gets built.
   wall-clock semantics** at the automation layer (gateway
   `AutomationSchedule.timezone`, verbatim: "IANA timezone used to evaluate
   cronExpression with wall-clock semantics" — DST handled), so ask for the
-  ET window in `America/New_York`, never pre-converted to UTC. Only the
-  CLI flag surface for setting it is `[unverified-live]` — discover it at
-  build time; if the deploy path truly can't carry a timezone, encode the
-  ET window in UTC and note the DST caveat in the method panel rather than
-  silently drifting an hour twice a year.
+  ET window in `America/New_York`, never pre-converted to UTC. The CLI
+  `alva deploy` flag surface may lag the gateway (one live build found no
+  timezone flag — DESIGN §12); discover it at build time, and if the deploy
+  path can't carry a timezone, either set it through the gateway's
+  `updateAutomationSchedule(cronExpression, timezone)` path or encode the
+  ET window in UTC with a data-driven session gate in the producer (bar
+  timestamps decide open/close — no clock math, DST-immune) and say so in
+  the method panel rather than silently drifting an hour twice a year.
 - The producer classifies each run by its timestamp:
   - **Pre-open run** (before 09:30 ET): judge the **gap** (open-vs-prior-
     close once real-time data confirms the open) and sweep overnight news.

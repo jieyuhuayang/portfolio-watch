@@ -21,6 +21,8 @@ Mode: bare watchlist (no account connected, no quantities) — rung C′,
 | 07:33 | `config.json` gains `playbook_url` → digests now carry the **Open Playbook deep-link button** (verified on the next digest: `actions: true`) | 07 |
 | 07:34 | **Screenshot gate passed**: released page renders real feed values — market-aware badge "market closed" (not stale), NVDA earnings "today", full watchlist table, both alerts on the timeline, Portfolio-Alerts-Off panel | 14 |
 | 07:36–08:0x | Delivery attempts: #1 lost during an alert-history 504 window; test fingerprint reset (KV surgery, gate itself behaved correctly) → attempt #2 (run 25823638): digest written **with actions**, still no `sent` row after 6+ min of polling; routing diffed field-by-field against the working crypto automation — identical. Judged platform-side fanout issue; monitoring continues; feedback drafted | 15 |
+| **08-27 (organic)** | **Delivery closed by real market events**: NVDA's post-earnings day produced three escalating digests — intraday +7.0% (3.3σ, 14:01), intraday +9.0% (4.3σ, 16:30), close +8.7% (4.2σ close-anchor, 21:00) — and **all three fanned out with `status: "sent"`, `delivery_provider: "web"`**. Digest↔sent reconciles exactly: 6 digest rows total = 3 pre-publish verification rows (non-delivering `alva run`, correctly no sent) + 3 scheduled rows, each with a sent row. The Aug-26 fanout gap was platform-side and transient, as judged | 16 |
+| 08-30 (verify) | Read-only re-verification: `alert history` 3× sent; delivery config re-read — `isEnabled: true` → channel 5025, email `isEnabled/isAvailable` both false (no verified email on the account), IM unbound → web is the only *available* destination, and it works. Observation for review: two same-severity WARNING deliveries in one session (3.3σ→4.3σ) — escalating magnitude plus the close anchor; whether magnitude-escalation should re-notify within a severity tier is a tuning question the log records rather than hides | 16 |
 
 ## Definition of done — status
 
@@ -31,7 +33,7 @@ Mode: bare watchlist (no account connected, no quantities) — rung C′,
 - [x] Playbook released v1.0.0: lint 0/0/0, README current, screenshot shows real feed-backed values
 - [x] Alert content real (earnings-day alert on the actual NVDA report date) with deep-link action attached
 - [x] Four delivery gates verified individually
-- [ ] **Delivery `sent` row: pending — platform-side fanout not firing for this new automation** (two controlled attempts; the same mechanism's executed delivery proof exists in the crypto demo: `demo-evidence/13-delivery-proof-1.txt`). The skill's own discipline is what kept this from being reported as delivered.
+- [x] **Delivery `sent` rows: closed 08-27, organically** — three real NVDA post-earnings alerts fanned out (`sent` / `web`), digest↔sent reconciled 1:1 against the 3 scheduled digests (evidence 16; verified read-only 08-30). The Aug-26 gap was platform-side and transient — the skill's refusal to report "delivered" without a `sent` row is what kept the log honest until the platform proved it.
 
 ## Cost
 

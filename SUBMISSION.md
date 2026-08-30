@@ -34,11 +34,19 @@ v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计
 - 评测报告：`evals/iteration-{1,2,3}-results.md`
 - 产品设计说明（中文，深度版）：`DESIGN.md`
 
-## 已知未闭环项（如实陈述）
+## 已知未闭环项（如实陈述）——已于 2026-08-30 核验闭环
 
-美股 demo 的测试告警送达（`alert history` 的 sent 行）在提交时点仍未出现：
-digest 写入成功、四门逐项就绪、路由与正常投递的 crypto automation 逐字段
-一致，判定为平台侧新 automation 的 fanout 问题（详见
+原未闭环项：美股 demo 的告警送达 sent 行在初次提交时点未出现（当时判定为
+平台侧新 automation 的 fanout 问题，四门已逐项就绪，详见
 `demo-evidence-equity/15-delivery-diagnostics.txt` 与 DESIGN.md §12.3）。
-同一送达机制的已执行证明在 crypto demo（`demo-evidence/13-delivery-proof-1.txt`）。
-监控持续中；若送达落地将更新证据文件。
+
+**后续闭环（08-27 真实行情，08-30 只读核验）**：NVDA 财报次日的三条真实
+告警（盘中 +7.0%/3.3σ → 盘中 +9.0%/4.3σ → 收盘 +8.7% 定锚）全部送达
+（`alert history` 三条 `status: "sent"`），digest↔sent 逐条对账一致 ——
+3 条发布前验证行（非送达 `alva run`）正确地没有 sent 行，3 条调度运行行
+逐一对应（`demo-evidence-equity/16-delivery-sent-rows.json`）。当时的判定
+被证实：fanout 缺口是平台侧且短暂的；skill 坚持"无 sent 行不得报送达"
+让记录在平台自证之前保持了诚实。A 股 showcase 同期 0 告警 0 送达，经
+核验为真实安静（29 次运行全绿、digest 计数 0，
+`demo-evidence-ashare/18-quiet-runs-delivery-state.jsonl`）——
+"沉默即信息"双向成立。

@@ -1,0 +1,62 @@
+// Quiet-runs proof for portfolio-watch-ashare (feed 27827), captured 2026-08-30 (read-only)
+// 29 scheduled runs (Aug 26-28 sessions); zero alert rows written; zero deliveries — silence is genuine, not a delivery failure.
+// alerts/digest/@count:
+0
+// alerts/log/@last/5:
+[]
+// alert delivery history (empty):
+{
+  "feed_path": "/alva/home/lx79d/feeds/portfolio-watch-ashare",
+  "items": [],
+  "next_cursor": ""
+}
+// portfolio_nav/series/@last/2 (data pipeline healthy through Fri close):
+[
+  {
+    "nav_cny": 4035452,
+    "pnl_24h": -0.0072278502584322,
+    "drawdown_30d": 0.030806106078218543,
+    "cash_ratio": 0.16355045234090257,
+    "top_weight": 0.63964581910527,
+    "eff_bets": 1.6489057950323613,
+    "avg_corr": 0.8313105553241718,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "market_state": "open",
+    "run_kind": "rth",
+    "date": 1787900409089
+  },
+  {
+    "nav_cny": 4027370,
+    "pnl_24h": -0.008976711716779051,
+    "drawdown_30d": 0.032747158790696784,
+    "cash_ratio": 0.16387866026712222,
+    "top_weight": 0.6393874910922016,
+    "eff_bets": 1.6490018861002314,
+    "avg_corr": 0.8313105553241718,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "market_state": "open",
+    "run_kind": "rth",
+    "date": 1787902204247
+  }
+]
+// cronjob 32189 (active, run_count 29):
+{
+  "args": null,
+  "created_at": "2026-08-26T08:35:18Z",
+  "cron_expression": "*/30 1-7 * * 1-5",
+  "end_at": null,
+  "execution_timeout_seconds": 1800,
+  "id": 32189,
+  "max_heap_size_mb": null,
+  "max_runs": null,
+  "name": "portfolio-watch-ashare",
+  "path": "/feeds/portfolio-watch-ashare/v1/src/index.js",
+  "push_notify": true,
+  "run_as_user_id": "0",
+  "run_count": 29,
+  "start_at": "2026-08-26T08:35:18Z",
+  "status": "active",
+  "updated_at": "2026-08-28T07:30:00Z"
+}

@@ -206,6 +206,10 @@ tickers, manual holdings, or connected Portfolio Accounts"）与三来源模式
    整理待提交平台反馈。教训与 skill 条文一致：**送达证明只认
    `alert history` 的 sent 行**，写入成功和四门就绪都不是送达 ——
    这条纪律正是这次让"看起来配好了"没有被误报成"已送达"的东西。
+   **闭环补记（08-30 核验）**：判定被证实——08-27 NVDA 财报次日的三条
+   真实告警全部 fanout 成功（3× `sent`/`web`），digest↔sent 逐条对账一致；
+   缺口确为平台侧且短暂（证据
+   `demo-evidence-equity/16-delivery-sent-rows.json`）。
 
 ## 13. v3→v4 变更清单（第一性原理升级，来源标注）
 
