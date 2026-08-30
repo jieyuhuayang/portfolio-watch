@@ -202,14 +202,15 @@ tickers, manual holdings, or connected Portfolio Accounts"）与三来源模式
    ACTIVE ch5025、delivery isEnabled，路由与正常投递的 crypto automation
    逐字段 diff 一致），但 `alert history` 始终无 sent 行；期间 alert
    history 接口出现过 504。同机制的 crypto automation 前一日仍正常投递
-   —— 判定为平台侧 fanout 问题（新 automation 或后端降级），已按证据
-   整理待提交平台反馈。教训与 skill 条文一致：**送达证明只认
+   —— 判定为平台侧 fanout 问题（新 automation 或后端降级）。教训与
+   skill 条文一致：**送达证明只认
    `alert history` 的 sent 行**，写入成功和四门就绪都不是送达 ——
    这条纪律正是这次让"看起来配好了"没有被误报成"已送达"的东西。
    **闭环补记（08-30 核验）**：判定被证实——08-27 NVDA 财报次日的三条
    真实告警全部 fanout 成功（3× `sent`/`web`），digest↔sent 逐条对账一致；
    缺口确为平台侧且短暂（证据
-   `demo-evidence-equity/16-delivery-sent-rows.json`）。
+   `demo-evidence-equity/16-delivery-sent-rows.json`）。原拟的平台反馈
+   随缺口自愈而取消，不再提交。
 
 ## 13. v3→v4 变更清单（第一性原理升级，来源标注）
 
