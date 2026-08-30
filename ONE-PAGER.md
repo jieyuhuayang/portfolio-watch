@@ -11,11 +11,12 @@ loses money.
 
 So my approach was to write down the full standard for "what deserves to
 interrupt an investor" as a methodology an AI can execute strictly, make it
-hold for any portfolio, and make it checkable against historical data. That
-unfolds into three questions, which are the three parts of this page:
-**what to trust, when to speak, and why believe it**.
+hold for any portfolio, and make it checkable against historical data. The
+methodology has three layers, which structure this page: **facts** (where
+data comes from and how far to trust it), **judgment** (what deserves a
+notification), and **verification** (how the design is proven).
 
-## 1. What to trust: portfolios vary endlessly, truth follows one rule
+## 1. Facts: portfolios vary endlessly, one rule governs the data
 
 First, what the generated Playbook actually is: a pipeline that runs on a
 schedule, and each run does four things — **fetch prices, compute metrics,
@@ -45,9 +46,10 @@ whether a news item matters) while every price, value, and P&L figure is
 fetched by code; and when a fetch fails, the asset is marked stale and its
 alerts are paused — bad data never gets a voice.
 
-## 2. When to speak: only when it's worth it
+## 2. Judgment: notify only when it is worth it
 
-**What to watch?** Risk is read in four layers, from close-up to wide:
+**Which dimensions to watch?** Risk is read in four layers, from close-up
+to wide:
 
 1. **Each asset**: price moves, major news, earnings, gaps;
 2. **Between assets**: correlated stocks falling together is one event,
@@ -59,12 +61,12 @@ alerts are paused — bad data never gets a voice.
 4. **The system itself**: if the account connection breaks, the user
    hears about it once, and only once.
 
-**How big is big?** Relative to each asset's own volatility, never one
+**What counts as a material move?** Relative to each asset's own volatility, never one
 flat percentage: a 5% day is routine for a mid-cap and a catastrophe for a
 stablecoin. And only band crossings count: drawdown moving from 9% to 11%
 enters a new range and gets said once; hovering around 10% stays silent.
 
-**What stays unsaid?** Four kinds of noise, each suppressed:
+**Which cases never notify?** Four kinds of noise, each suppressed:
 
 - Already said: each state notifies once; worse gets said again,
   recovery just updates the page quietly;
@@ -79,15 +81,15 @@ After all that, the user gets one sentence they can hold the product to:
 "on the normal setting, roughly one or two a week." Replayed against the
 past year of real prices, 82% of trading days were in fact silent.
 
-**Several things at once?** Merge first, then rank: a sector-wide move
+**How are simultaneous signals handled?** Merge first, then rank: a sector-wide move
 becomes one sector alert, not five stock alerts; each run sends at most one
 digest, ordered by severity inside.
 
-**And after it rings?** Every alert carries an "Open Playbook" button that
+**And after delivery?** Every alert carries an "Open Playbook" button that
 lands on the relevant part of the page. The alert is the doorbell; the
 page is the full answer.
 
-## 3. Why believe it: every design claim was tested against reality
+## 3. Verification: every design claim tested against reality
 
 The first two sections are design. This one answers a different question:
 has any of it been tested outside the document? Four claims, each with
@@ -100,7 +102,7 @@ evidence from the live Alva platform.
   [a US-stock watchlist made of three bare tickers](https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo),
   [a declared A-share book concentrated in one name, with target weights and cash](https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase),
   and [a declared crypto book](https://alva.ai/u/lx79d/playbooks/portfolio-watch-crypto-book).
-- **"It only interrupts when it's worth it"** — verified by real markets
+- **"It notifies only when it is worth it"** — verified by real markets
   in both directions. It speaks: the day after NVDA's earnings, the
   US-stock watch sent three alerts (intraday move, escalation, close
   confirmation), each recorded as "delivered" in the platform's logs. It
