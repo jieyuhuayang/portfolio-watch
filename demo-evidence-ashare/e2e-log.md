@@ -50,6 +50,13 @@ Share link: <https://alva.ai/u/lx79d/playbooks/portfolio-watch-showcase>
 - **v2.0.1 发布**（同链接）：playbook 元数据由旧 NVDA persona 残留（英文
   标题/描述）修正为"重仓中际旭创 · A 股风险监控"+ A 股描述与
   trading-symbols；页面 HTML 未变，lint 门通过。changelog 记录共享引擎。
+- **v2.0.2 发布（2026-08-30，用户反馈驱动）**：description 由术语清单式
+  文案（"敞口而非代码——板块 leave-one-out β/残差……"）重写为面向访客的
+  大白话——先讲 persona 初衷（重仓+怕板块回调），再讲页面的三件事
+  （集中度/板块 vs 个股/目标带与回撤提醒）与回放验证（约 3.7 次/月）。
+  页面 HTML 与判断逻辑无变化；公开页读回核验新文案已生效。教训归档：
+  **元数据 description 是访客读的第一段话，受众是页面访客而非评审**，
+  术语应留在 README 的方法论小节里逐条带解释出现。
 - 页面读 `replay/summary/@last/1`（= 新 44 行）与 `replay/log/@last/40`
   （= 全部落在新批次内）——新旧回放批次在存储层并存可审计，页面显示
   无重复。

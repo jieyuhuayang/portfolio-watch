@@ -92,6 +92,17 @@ It is versioned with the Playbook: change the thresholds, change the README
 in the same release. An out-of-date README is a false label on a financial
 product.
 
+The playbook **description** (metadata, rendered under the title) has a
+different audience than the README: it is the first paragraph a visitor
+reads, before they've seen a single number. Write it as *why this page
+exists and what it does for its owner* — whose problem, what it watches
+for, when it speaks up — in plain words a non-quant understands. Never
+make it a feature list of techniques ("leave-one-out β/residual,
+hysteresis, effective bets…"): jargon belongs in the README's method
+section, each term introduced with its one-line explanation. Test: would
+the persona this page was built for understand their own page's opening
+line?
+
 ## 4. Privacy and sharing
 
 Default visibility: **as private as the tier allows**. This is wealth data;
