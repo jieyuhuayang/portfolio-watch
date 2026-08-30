@@ -1,0 +1,11 @@
+{
+  "as_declared_on": "2026-08-30",
+  "persona": "BTC 重仓的申报账本 demo（虚构 persona，用于产品演示）",
+  "holdings": [
+    { "asset": "BTC", "name": "BTC", "class": "crypto", "qty": 0.75 },
+    { "asset": "ETH", "name": "ETH", "class": "crypto", "qty": 6 },
+    { "asset": "SOL", "name": "SOL", "class": "crypto", "qty": 160 },
+    { "asset": "USDT", "name": "USDT", "class": "stable", "qty": 18000 }
+  ],
+  "targets": { "BTC": 0.40, "ETH": 0.25, "SOL": 0.20, "USDT": 0.15 }
+}

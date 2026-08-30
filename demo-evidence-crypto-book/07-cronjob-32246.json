@@ -1,0 +1,18 @@
+{
+  "args": null,
+  "created_at": "2026-08-30T10:14:26Z",
+  "cron_expression": "0 * * * *",
+  "end_at": null,
+  "execution_timeout_seconds": 1800,
+  "id": 32246,
+  "max_heap_size_mb": null,
+  "max_runs": null,
+  "name": "portfolio-watch-crypto-book",
+  "path": "/feeds/portfolio-watch-crypto-book/v1/src/index.js",
+  "push_notify": true,
+  "run_as_user_id": "0",
+  "run_count": 1,
+  "start_at": "2026-08-30T10:14:26Z",
+  "status": "active",
+  "updated_at": "2026-08-30T10:14:35Z"
+}

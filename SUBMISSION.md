@@ -24,12 +24,16 @@ v3 63/63，裸跑 42/63，v2 在受重构影响场景 13/19 vs v3 19/19。设计
   除权语义、漂移带、页面内嵌 12 个月回放（两次证伪：滞回 + 除权识别）
 - **美股 watchlist demo（题目原句构建，公开）**：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-equity-demo>
+- **加密申报账本 demo（矩阵第四格：申报持仓 × crypto，公开）**：
+  <https://alva.ai/u/lx79d/playbooks/portfolio-watch-crypto-book>
+  ——共享判断引擎第二资产实例（38 断言）；24/7 快慢双车道、稳定币脱锚
+  两次确认、回撤 episode、大盘联动折叠
 - Crypto share-safe 公开 demo（canonical）：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo-safe>
 - Crypto 私有原版（owner 视角）：
   <https://alva.ai/u/lx79d/playbooks/portfolio-watch-demo>
 - One-pager：`ONE-PAGER.md`（EN）/ `ONE-PAGER.zh.md`（中文）
-- 端到端证据：`demo-evidence/`（crypto）、`demo-evidence-equity/`（美股）、`demo-evidence-ashare/`（A 股 showcase）
+- 端到端证据：`demo-evidence/`（crypto 连账户）、`demo-evidence-equity/`（美股）、`demo-evidence-ashare/`（A 股 showcase）、`demo-evidence-crypto-book/`（加密申报账本）
 - 真机校准表：`calibration.md`
 - 评测报告：`evals/iteration-{1,2,3}-results.md`
 - 产品设计说明（中文，深度版）：`DESIGN.md`

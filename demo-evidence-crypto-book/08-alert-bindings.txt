@@ -1,0 +1,6 @@
+
+• portfolio-watch-crypto-book  [ACTIVE]
+    target: FEED 27876
+    channel: 5025
+    kind: FEED_ALERT
+    automation status: ACTIVE

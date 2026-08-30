@@ -1,0 +1,58 @@
+[
+  {
+    "nav_usd": 107957.2475,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "stable_ratio": 0.1667326688743153,
+    "top_weight": 0.54188124331347,
+    "eff_bets": 2.064859290285532,
+    "avg_corr": 0.833936253294346,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "market_state": "24x7",
+    "run_kind": "hourly",
+    "date": 1788084736148
+  },
+  {
+    "nav_usd": 107957.2475,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "stable_ratio": 0.1667326688743153,
+    "top_weight": 0.54188124331347,
+    "eff_bets": 2.064859290285532,
+    "avg_corr": 0.833936253294346,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "market_state": "24x7",
+    "run_kind": "hourly",
+    "date": 1788084795714
+  },
+  {
+    "nav_usd": 107957.2475,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "stable_ratio": 0.1667326688743153,
+    "top_weight": 0.54188124331347,
+    "eff_bets": 2.064859290285532,
+    "avg_corr": 0.833936253294346,
+    "unpriced_count": 1,
+    "stale_count": 1,
+    "market_state": "24x7",
+    "run_kind": "hourly",
+    "date": 1788084816949
+  },
+  {
+    "nav_usd": 107957.2475,
+    "pnl_24h": null,
+    "drawdown_30d": 0,
+    "stable_ratio": 0.1667326688743153,
+    "top_weight": 0.54188124331347,
+    "eff_bets": 2.064859290285532,
+    "avg_corr": 0.833936253294346,
+    "unpriced_count": 0,
+    "stale_count": 0,
+    "market_state": "24x7",
+    "run_kind": "hourly",
+    "date": 1788084876254
+  }
+]

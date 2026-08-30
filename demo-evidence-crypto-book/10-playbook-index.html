@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>加密申报账本监控 (Crypto Book)</title>
+<link rel="stylesheet" href="https://alva-ai-static.b-cdn.net/design-system/v1/design-system.css" />
+<script src="https://unpkg.com/@alva-ai/toolkit/dist/browser.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  html { height: 100%; overflow: hidden; }
+  body { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--b0-page); }
+  .status-pill { display: inline-flex; align-items: center; gap: var(--spacing-xxs);
+    font-size: 12px; line-height: 20px; color: var(--text-n7); }
+  .status-dot { width: 8px; height: 8px; border-radius: var(--radius-ct-max); background: var(--main-m3); }
+  .status-dot.partial { background: var(--chart-orange1-main); }
+  .status-dot.stale { background: var(--main-m4); }
+  .alert-item { padding: var(--spacing-m) 0; }
+  .alert-item + .alert-item { border-top: 0.5px solid var(--line-l12); }
+  .alert-head { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
+  .alert-sev { font-size: 11px; letter-spacing: 0.11px; line-height: 18px;
+    padding: 0 var(--spacing-xs); border-radius: var(--radius-ct-min);
+    background: var(--grey-g1); color: var(--text-n7); }
+  .alert-sev.critical { background: var(--main-m4-10); color: var(--main-m4); }
+  .alert-headline { font-size: 14px; line-height: 22px; color: var(--text-n9); }
+  .alert-time { font-size: 12px; color: var(--text-n5); }
+  .alert-detail { font-size: 12px; line-height: 20px; color: var(--text-n7); margin-top: var(--spacing-xxs); }
+  .method-body p, .method-body li { font-size: 13px; line-height: 22px; color: var(--text-n7); }
+  .method-body strong { font-weight: 500; color: var(--text-n9); }
+  .method-body ul { padding-left: var(--spacing-l); margin: var(--spacing-xs) 0; }
+</style>
+</head>
+<body>
+<div class="playbook-container">
+  <div class="widget-grid">
+
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">组合市值</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">申报持仓 · USDT≈USD</div>
+        <div id="kpi-nav" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div id="kpi-nav-sub" style="font-size:11px;color:var(--text-n5);margin-top:var(--spacing-xxs);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">有效押注数</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">独立押注 (1/Σw²)</div>
+        <div id="kpi-bets" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">组合内相关性</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div style="font-size:11px;color:var(--text-n7);letter-spacing:0.11px;">BTC/ETH/SOL · 60 日</div>
+        <div id="kpi-corr" style="font-size:24px;letter-spacing:0.24px;color:var(--text-n9);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+    <div class="widget-card col-2">
+      <div class="widget-title"><span class="widget-title-text">数据状态</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);padding:var(--spacing-l);flex-direction:column;align-items:flex-start;">
+        <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-label">加载中…</span></div>
+        <div id="status-asof" style="font-size:11px;color:var(--text-n5);margin-top:var(--spacing-xxs);">—</div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">组合市值与回撤</span>
+        <span class="widget-timestamp" id="chart-asof"></span>
+      </div>
+      <div class="chart-body chart-dotted-background">
+        <div id="chart-nav" style="width:100%;height:300px;"></div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">持仓 vs 目标带</span>
+        <span class="widget-timestamp">持仓为 2026-08-30 申报 · 虚构演示账本</span>
+      </div>
+      <div class="table-card" id="pos-table">
+        <div class="table-row table-header">
+          <div class="table-cell">资产</div>
+          <div class="table-cell">市值</div>
+          <div class="table-cell">权重</div>
+          <div class="table-cell">目标带</div>
+          <div class="table-cell">24h</div>
+          <div class="table-cell">1h</div>
+          <div class="table-cell">大盘残差</div>
+          <div class="table-cell">β</div>
+          <div class="table-cell">状态</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="widget-card col-8">
+      <div class="widget-title">
+        <span class="widget-title-text">告警时间线</span>
+        <span class="widget-timestamp">沉默即"无实质变化"</span>
+      </div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body" id="alert-list" style="width:100%;">
+          <div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">加载中…</div></div>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">方法说明</span></div>
+      <div class="widget-body" style="background:var(--grey-g01);flex-direction:column;align-items:stretch;">
+        <div class="free-text-body method-body" style="width:100%;">
+          <p><strong>这个 watch 盯什么。</strong>一位 BTC 重仓投资者的申报加密账本
+          （<em>虚构演示 persona</em>）：0.75 BTC、6 ETH、160 SOL、18,000 USDT，
+          目标仓位 40/25/20/15。<strong>每小时刷新，24/7</strong>——加密市场没有收盘，
+          所以没有"会话窗口"：每一次运行都是一次判断。页面上每个数字都是打开时
+          从数据源现读的（Binance 现货 USDT 计价，标注 USDT≈USD）。</p>
+          <p><strong>快慢两条车道。</strong>慢车道盯 <strong>24 小时滚动变化</strong>
+          （对 20 个自然日 σ 标定——加密没有"昨收"这个锚，滚动窗是诚实的替代）；
+          快车道盯 <strong>1 小时急动</strong>（对 7 日小时 σ 标定，方向状态制：
+          一段持续下跌只在开始时提醒一次，不逐小时轰炸——持续性由慢车道与回撤档位接管）。</p>
+          <p><strong>风险的单位是敞口，不是代码。</strong>BTC/ETH/SOL 相关性常年 0.7+：
+          三个币同向大动是<strong>一次大盘事件</strong>，合并为一条通知；单币的声音只属于
+          <strong>残差</strong>（扣除对大盘 β 后仍超 3× 残差 σ，且自身确实在动）。
+          三个风险仓位当前约 <strong>2 个有效押注</strong>（1/Σw²）——集中的是相关性，不只是仓位。</p>
+          <p><strong>稳定币的纪律。</strong>USDT 仓位按 1 计入市值、汇报稳定币占比，
+          <strong>永不产生价格波动告警</strong>——稳定币的风险不是波动而是脱锚：
+          监控 USDC/USDT 交叉盘对 1.0 的偏离，<strong>连续两次运行确认才告警</strong>
+          （偏离 ≥0.5% warning / ≥1% critical；交叉盘无法区分是哪一边脱锚，告警文案如实说明），
+          恢复后静默复位、新一轮脱锚可再次告警。</p>
+          <p><strong>告警规则</strong>（preset: <strong>normal</strong>；每条告警指明它服务的决策，绝不给交易指令）：</p>
+          <ul>
+            <li>大盘联动：≥2 个币同向 ≥3σ 且相关性 ≥0.5 → 合并为一条大盘事件</li>
+            <li>大盘残差 ≥3× 残差 σ（且自身 ≥1σ 在动）→ "重新检查这个币的论点"</li>
+            <li>1 小时急涨/急跌 ≥5× 小时 σ → 快车道事件（方向状态制防轰炸）</li>
+            <li>权重出目标带 ±5pp → "再平衡决策点"（回带内 1pp 才重新武装）</li>
+            <li>回撤 −5/10/15/20/30% 事件化：进入与加深才通知，恢复静默复位</li>
+            <li>稳定币交叉盘偏离 ≥0.5%（两次确认）→ 脱锚核实；有效押注数 &lt; 2.0 → 分散度检查</li>
+          </ul>
+          <p><strong>与同系列 demo 的关系。</strong>本页是共享判断引擎的第二个资产实例
+          （第一个是 A 股 showcase）：同一套新颖度门/指纹/episode 状态机，替换的只是
+          市场语义（涨跌停+T+1 → 24/7+快车道+脱锚）。38 条离线断言与实盘共享同一份判断代码；
+          12 个月规则回放的方法论演示见 A 股 showcase 页。</p>
+          <p><strong>已知盲区。</strong>持仓数量由用户维护（链上/交易所转账不会自动同步——
+          要活账本请连接账户）；仅覆盖 Binance 现货 USDT 对（无合约/杠杆/链上钱包）；
+          新闻/舆情告警未启用；深度回放未在本页内嵌。<em>虚构演示数据，不构成投资建议。</em></p>
+        </div>
+        <div class="alva-watermark"><img src="https://alva-ai-static.b-cdn.net/icons/alva-watermark.svg" alt="Alva" /></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function initTableAlignment(tableEl) {
+    var rows = tableEl.querySelectorAll(".table-row");
+    if (rows.length === 0) return;
+    var colCount = rows[0].querySelectorAll(".table-cell").length;
+    rows.forEach(function (row) {
+      row.style.removeProperty("min-width");
+      var cells = row.querySelectorAll(".table-cell");
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].style.removeProperty("flex");
+        cells[i].style.removeProperty("min-width");
+        cells[i].style.removeProperty("width");
+      }
+    });
+    var colWidths = [];
+    for (var col = 0; col < colCount; col++) {
+      var maxW = 0;
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) maxW = Math.max(maxW, cell.scrollWidth);
+      });
+      colWidths.push(maxW);
+    }
+    var totalContent = 0;
+    for (var i = 0; i < colWidths.length; i++) totalContent += colWidths[i];
+    var gapTotal = (colCount - 1) * 16;
+    var available = tableEl.clientWidth - gapTotal;
+    var resolved = [];
+    for (var col = 0; col < colCount; col++) {
+      var proportional = Math.round((colWidths[col] / totalContent) * available);
+      resolved.push(Math.max(colWidths[col], proportional));
+    }
+    var totalWidth = gapTotal;
+    for (var col = 0; col < colCount; col++) {
+      totalWidth += resolved[col];
+      rows.forEach(function (row) {
+        var cell = row.querySelectorAll(".table-cell")[col];
+        if (cell) cell.style.flex = "0 0 " + resolved[col] + "px";
+      });
+    }
+    rows.forEach(function (row) { row.style.minWidth = totalWidth + "px"; });
+  }
+
+  var FEED = "/alva/home/lx79d/feeds/portfolio-watch-crypto-book/v1/data";
+  var CADENCE_MS = 60 * 60 * 1000;
+  var BAND = 0.05;
+
+  function createAlvaClientConfig() {
+    var params = new URLSearchParams(window.location.search);
+    var pbsvToken = window.alva && window.alva.udf && window.alva.udf.getViewerToken
+      ? window.alva.udf.getViewerToken() : null;
+    var apiOrigin = params.get("api_origin");
+    var cfg = {};
+    if (pbsvToken) cfg.pbsvToken = pbsvToken;
+    if (apiOrigin) cfg.baseUrl = apiOrigin.replace(/\/$/, "");
+    return cfg;
+  }
+  function readFeed(path) {
+    var client = new AlvaToolkit.AlvaClient(createAlvaClientConfig());
+    return client.fs.read({ path: FEED + path });
+  }
+  function flatten(rows) {
+    var out = [];
+    (rows || []).forEach(function (r) {
+      if (r && Array.isArray(r.items)) {
+        r.items.forEach(function (it) { out.push(Object.assign({ date: r.date }, it)); });
+      } else if (r) out.push(r);
+    });
+    return out;
+  }
+  function fmtUsd(v) {
+    if (v == null) return "—";
+    return "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: v >= 1000 ? 0 : 2 });
+  }
+  function fmtPct(v, signed) {
+    if (v == null) return "—";
+    var p = (v * 100).toFixed(Math.abs(v) < 0.001 ? 2 : 1) + "%";
+    return signed && v > 0 ? "+" + p : p;
+  }
+  function fmtTime(ms) {
+    if (!ms) return "—";
+    var d = new Date(ms + 8 * 3600e3); // CST display
+    return d.toISOString().replace("T", " ").slice(0, 16) + " CST";
+  }
+
+  (async function () {
+    var navRows, posRows, alertRows;
+    try {
+      navRows = flatten(await readFeed("/portfolio_nav/series/@last/200"));
+      posRows = flatten(await readFeed("/positions/snapshot/@last/1"));
+      alertRows = flatten(await readFeed("/alerts/log/@last/20"));
+    } catch (e) {
+      document.getElementById("status-label").textContent = "数据读取失败";
+      document.getElementById("status-dot").className = "status-dot stale";
+      return;
+    }
+    var latest = navRows.length ? navRows[navRows.length - 1] : null;
+
+    if (latest) {
+      document.getElementById("kpi-nav").textContent = fmtUsd(latest.nav_usd);
+      document.getElementById("kpi-nav-sub").textContent =
+        "30日回撤 " + fmtPct(latest.drawdown_30d) + " · 稳定币 " + fmtPct(latest.stable_ratio);
+      var riskN = posRows.filter(function (r) { return r.asset_class === "crypto"; }).length;
+      document.getElementById("kpi-bets").textContent =
+        latest.eff_bets != null ? latest.eff_bets.toFixed(1) + " / " + riskN : "—";
+      document.getElementById("kpi-corr").textContent =
+        latest.avg_corr != null ? latest.avg_corr.toFixed(2) : "—";
+      var dot = document.getElementById("status-dot"), label = document.getElementById("status-label");
+      var age = Date.now() - latest.date;
+      var degraded = (latest.stale_count || 0) + (latest.unpriced_count || 0);
+      if (age > 2 * CADENCE_MS) {
+        dot.className = "status-dot stale"; label.textContent = "数据滞后 — 24/7 市场缺运行";
+      } else if (degraded > 0) {
+        dot.className = "status-dot partial"; label.textContent = "部分降级 — " + degraded + " 个资产";
+      } else {
+        dot.className = "status-dot"; label.textContent = "实时 · 24/7";
+      }
+      document.getElementById("status-asof").textContent = "截至 " + fmtTime(latest.date);
+      document.getElementById("chart-asof").textContent = "截至 " + fmtTime(latest.date);
+    }
+
+    var AX = { axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { fontSize: 10, color: "rgba(0,0,0,0.7)", margin: 8,
+        fontFamily: "'Delight', -apple-system, 'OPPO Sans 4.0', BlinkMacSystemFont, sans-serif" },
+      splitLine: { show: false } };
+    var chart;
+    var navOption = {
+      grid: { top: 4, right: 4, bottom: 4, left: 4, containLabel: true },
+      tooltip: { trigger: "axis" },
+      xAxis: Object.assign({ type: "time", boundaryGap: false }, AX),
+      yAxis: Object.assign({ type: "value", scale: true }, AX),
+      series: [{ type: "line", showSymbol: navRows.length < 20, symbolSize: 5,
+        data: navRows.map(function (r) { return [r.date, r.nav_usd == null ? null : Math.round(r.nav_usd)]; }),
+        lineStyle: { color: "#c2503e", width: 2 }, itemStyle: { color: "#c2503e" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: "rgba(194,80,62,0.16)" }, { offset: 1, color: "rgba(194,80,62,0)" }]) } }],
+    };
+    requestAnimationFrame(function () {
+      chart = echarts.init(document.getElementById("chart-nav"));
+      chart.setOption(navOption); chart.resize();
+    });
+    window.addEventListener("resize", function () { if (chart) requestAnimationFrame(function () { chart.resize(); }); });
+
+    var tbl = document.getElementById("pos-table");
+    posRows.sort(function (a, b) { return (b.weight || 0) - (a.weight || 0); });
+    posRows.forEach(function (r) {
+      var dev = r.target_weight != null && r.weight != null ? r.weight - r.target_weight : null;
+      var out = dev != null && Math.abs(dev) > BAND;
+      var status = r.pricing === "carried" ? "沿用价" :
+                   r.pricing === "unpriced" ? "无法定价" :
+                   r.pricing === "close_only" ? "小时线降级" :
+                   out ? "⚠ 出目标带" :
+                   (r.resid_score != null && r.resid_score >= 3 && r.move_score != null && r.move_score >= 1) ? "⚡ 个币行情" : "正常";
+      var bandCell = "—";
+      if (r.target_weight != null) {
+        bandCell = fmtPct(r.target_weight) + " ± 5pp" + (dev != null ? " (" + (dev > 0 ? "+" : "") + (dev * 100).toFixed(1) + "pp)" : "");
+      }
+      var row = document.createElement("div");
+      row.className = "table-row table-body-row";
+      if (r.stale) row.style.opacity = "0.55";
+      row.innerHTML =
+        '<div class="table-cell">' + (r.name || r.asset) + (r.asset_class === "stable" ? " · 稳定币" : "") + "</div>" +
+        '<div class="table-cell">' + fmtUsd(r.value_usd) + "</div>" +
+        '<div class="table-cell">' + fmtPct(r.weight) + "</div>" +
+        '<div class="table-cell' + (out ? " is-bearish" : "") + '">' + bandCell + "</div>" +
+        '<div class="table-cell ' + (r.chg_24h == null ? "" : r.chg_24h >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_24h, true) + "</div>" +
+        '<div class="table-cell ' + (r.chg_1h == null ? "" : r.chg_1h >= 0 ? "is-bullish" : "is-bearish") + '">' + fmtPct(r.chg_1h, true) + "</div>" +
+        '<div class="table-cell">' + (r.resid_chg == null ? "—" : fmtPct(r.resid_chg, true) + " (" + (r.resid_score != null ? r.resid_score.toFixed(1) + "σ" : "") + ")") + "</div>" +
+        '<div class="table-cell">' + (r.beta == null ? "—" : r.beta.toFixed(2)) + "</div>" +
+        '<div class="table-cell">' + status + "</div>";
+      tbl.appendChild(row);
+    });
+    initTableAlignment(tbl);
+    window.addEventListener("resize", function () { initTableAlignment(tbl); });
+
+    var list = document.getElementById("alert-list");
+    list.innerHTML = "";
+    if (!alertRows.length) {
+      list.innerHTML = '<div class="alert-item"><div class="alert-headline" style="color:var(--text-n5);">暂无告警 — 系统未判定任何实质变化（day-one 的出带/集中度状态已在构建时告知，不推送）。</div></div>';
+    } else {
+      alertRows.slice().reverse().forEach(function (a) {
+        var item = document.createElement("div");
+        item.className = "alert-item";
+        item.innerHTML =
+          '<div class="alert-head">' +
+          '<span class="alert-sev ' + (a.severity === "critical" || a.severity === "action-needed" ? "critical" : "") + '">' + a.severity + "</span>" +
+          '<span class="alert-headline">' + a.headline + "</span>" +
+          '<span class="alert-time">' + fmtTime(a.date) + "</span></div>" +
+          '<div class="alert-detail">' + a.detail + "</div>";
+        list.appendChild(item);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

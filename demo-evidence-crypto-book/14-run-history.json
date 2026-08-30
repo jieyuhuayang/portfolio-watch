@@ -1,0 +1,23 @@
+{
+  "runs": [
+    {
+      "created_at": "2026-08-30T10:14:39.0711Z",
+      "credits_used": 1,
+      "cronjob_id": 32246,
+      "duration_ms": 3071,
+      "error": "",
+      "finished_at": "2026-08-30T10:14:39.0711Z",
+      "id": 27694056,
+      "status": "completed",
+      "workflow_run_id": "73dcaf0f-fc75-42e0-b049-af40f3f3cfd4"
+    }
+  ],
+  "stats": {
+    "fail_count": 0,
+    "last_run_at": "2026-08-30T10:14:39.0711Z",
+    "last_success_at": "2026-08-30T10:14:39.0711Z",
+    "skipped_count": 0,
+    "success_count": 1,
+    "total_runs": 1
+  }
+}

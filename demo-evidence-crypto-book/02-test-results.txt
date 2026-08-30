@@ -1,0 +1,40 @@
+PASS  1.1 quiet on a no-event run
+PASS  1.2 NAV computed over priced + stable
+PASS  1.3 market never closes
+PASS  1.4 eff_bets present and ≤ risk count
+PASS  2.1 12% BTC 24h move alerts (raw or residual voice)
+PASS  2.1b the flat legs get no laggard-residual alert
+PASS  2.2 same state suppressed on rerun
+PASS  2.3 escalation re-alerts upward
+PASS  3.1 6% hourly SOL drop alerts fast_move
+PASS  3.2 sustained slide does not ping hourly
+PASS  4.1 stable row unit-priced, never a move subject
+PASS  4.2 no price_move alert ever targets the stable sleeve
+PASS  5.1 first depeg observation is silent (pending)
+PASS  5.2 second consecutive run confirms and alerts
+PASS  5.3 active depeg does not re-ping at same severity
+PASS  5.4 crossing 1% escalates to critical
+PASS  5.5 recovery re-arms silently
+PASS  5.6 a NEW episode alerts again after recovery
+PASS  5.7 a stale stable feed never judges depeg
+PASS  6.0 in-band baseline is quiet
+PASS  6.1 BTC weight breakout alerts drift once
+PASS  6.2 still out of band → quiet
+PASS  6.3 re-arm transitions the fingerprint silently
+PASS  6.4a re-excursion within 24h is oscillation, suppressed
+PASS  6.4b second excursion after 24h re-alerts
+PASS  7.1 crossing −10% band alerts entry
+PASS  7.2 same band stays quiet
+PASS  7.3 deepening re-alerts
+PASS  7.4 recovery re-arms the episode
+PASS  8.1 correlated crash collapses to ONE portfolio alert
+PASS  8.2 collapse names every leg
+PASS  9.1 failed fetch carries last price, marked stale
+PASS  9.2 no alert fires for the degraded asset
+PASS  9.3 no prior price → unpriced, out of NAV, footnoted
+PASS  9.4 dead hourly lane degrades to close-only, not a crash
+PASS  10.1 first run seeds state-kinds without alerting
+PASS  11.1 test alert passes exactly once
+PASS  11.2 test alert repeat suppressed
+
+38 passed, 0 failed

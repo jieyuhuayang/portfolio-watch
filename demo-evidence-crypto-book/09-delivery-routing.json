@@ -1,0 +1,13 @@
+{
+  "isEnabled": true,
+  "alvaChannels": [
+    {
+      "id": "5025"
+    }
+  ],
+  "email": {
+    "isEnabled": false,
+    "isAvailable": false,
+    "address": null
+  }
+}
