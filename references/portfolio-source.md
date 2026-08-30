@@ -75,13 +75,15 @@ Two more declared-mode rules:
   book at −8% equity drawdown is not an −8% book. Cash itself never alerts
   (no price, no move); it exists so the risk numbers are honest. Never
   invent a cash line the user didn't state.
-- **Stated model boundary: long-only, USD/USDT-quoted.** The declared model
-  here does not take short positions (side inverts alert semantics — a drop
-  becomes good news) or per-holding foreign currency (needs an FX rate
-  source in the NAV path). If the user declares a short or a non-USD
-  holding, say the boundary plainly and watch the rest — don't silently
-  treat a short as a long or a HKD position as USD, either of which
-  fabricates the sign or size of their risk.
+- **Stated model boundary: long-only, one quote currency per book.** The
+  declared model here does not take short positions (side inverts alert
+  semantics — a drop becomes good news) or holdings quoted in a different
+  currency from the rest of the book (combining them needs an FX rate
+  source in the NAV path; a single-currency book in USD, USDT, or CNY is
+  fine). If the user declares a short or a holding in a second currency,
+  say the boundary plainly and watch the rest — don't silently treat a
+  short as a long or a HKD position as USD, either of which fabricates
+  the sign or size of their risk.
 
 ## 3. Degradation ladder
 
